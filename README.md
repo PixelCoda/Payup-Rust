@@ -8,10 +8,18 @@ I built this library due to a lack of synchronous payment libraries.
 
 Roadmap:
 * 0.1.0: Quasi-Stripe Support
-    * Ability to list/create customers
-    * Ability to list/create charges
+    * Ability to list/create Customers (DONE)
+    * Ability to list/create Plans (DONE)
+
+    * Ability to list/create PaymentMethods (WIP)
+    * Ability to list/create Subscriptions (WIP)
+    * Ability to get/create Tokens (WIP)
+    * Ability to list/create Charges (WIP)
+    * Ability to list/create Payouts (WIP)
+
 * 0.2.0: Full Stripe API Support
 * 0.3.0: Paypal Support
+* 0.4.0: Cryptocurrency Support
 
 ## How to use library
 

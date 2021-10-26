@@ -243,7 +243,7 @@ pub struct Card {
     pub funding: String,
     // pub installments: Value,
     pub last4: String,
-    pub network: String,
+    // pub network: String,
     // #[serde(rename = "three_d_secure")]
     // pub three_d_secure: Value,
     // pub wallet: Value,
@@ -280,7 +280,7 @@ pub struct PaymentMethod {
     pub billing_details: BillingDetails,
     pub card: Card,
     pub created: i64,
-    // pub customer: Value,
+    pub customer: Option<String>,
     pub livemode: bool,
     pub metadata: Metadata,
     #[serde(rename = "type")]
@@ -302,3 +302,179 @@ pub struct ThreeDSecureUsage {
 }
 
 
+
+
+
+
+
+
+
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Subscriptions {
+    pub object: String,
+    pub data: Vec<Subscription>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub url: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Subscription {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    #[serde(rename = "automatic_tax")]
+    pub automatic_tax: Option<AutomaticTax>,
+    #[serde(rename = "billing_cycle_anchor")]
+    pub billing_cycle_anchor: Option<i64>,
+    #[serde(rename = "cancel_at")]
+    pub cancel_at: Option<i64>,
+    #[serde(rename = "cancel_at_period_end")]
+    pub cancel_at_period_end: Option<bool>,
+    #[serde(rename = "canceled_at")]
+    pub canceled_at: Option<i64>,
+    #[serde(rename = "collection_method")]
+    pub collection_method: Option<String>,
+    pub created: Option<i64>,
+    #[serde(rename = "current_period_end")]
+    pub current_period_end: Option<i64>,
+    #[serde(rename = "current_period_start")]
+    pub current_period_start: Option<i64>,
+    pub customer: Option<String>,
+    #[serde(rename = "days_until_due")]
+    pub days_until_due: Option<i64>,
+    #[serde(rename = "default_payment_method")]
+    pub default_payment_method: Option<String>,
+    #[serde(rename = "ended_at")]
+    pub ended_at: Option<i64>,
+    pub items: Option<SubscriptionItems>,
+    #[serde(rename = "latest_invoice")]
+    pub latest_invoice: Option<String>,
+    pub livemode: Option<bool>,
+    // #[serde(rename = "payment_settings")]
+    // pub payment_settings: PaymentSettings,
+    pub quantity: Option<i64>,
+    #[serde(rename = "start_date")]
+    pub start_date: Option<i64>,
+    pub status: Option<String>,
+   // #[serde(rename = "application_fee_percent")]
+    // pub application_fee_percent: Value,
+    // #[serde(rename = "default_source")]
+    // pub default_source: Value,
+    // #[serde(rename = "default_tax_rates")]
+    // pub default_tax_rates: Vec<Value>,
+    // pub discount: Value,
+    // pub metadata: Metadata4,
+    // #[serde(rename = "next_pending_invoice_item_invoice")]
+    // pub next_pending_invoice_item_invoice: Value,
+    // #[serde(rename = "pause_collection")]
+    // pub pause_collection: Value,
+    // #[serde(rename = "pending_invoice_item_interval")]
+    // pub pending_invoice_item_interval: Value,
+    // #[serde(rename = "pending_setup_intent")]
+    // pub pending_setup_intent: Value,
+    // #[serde(rename = "pending_update")]
+    // pub pending_update: Value,
+    // pub plan: Plan2,
+    // pub schedule: Value,
+    // #[serde(rename = "transfer_data")]
+    // pub transfer_data: Value,
+    // #[serde(rename = "trial_end")]
+    // pub trial_end: Value,
+    // #[serde(rename = "trial_start")]
+    // pub trial_start: Value,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionItems {
+    pub object: String,
+    pub data: Vec<SubscriptionItem>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+    pub url: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubscriptionItem {
+    pub id: String,
+    pub object: String,
+    // #[serde(rename = "billing_thresholds")]
+    // pub billing_thresholds: Value,
+    pub created: i64,
+    // pub metadata: Metadata,
+    // pub plan: Plan,
+    // pub price: Price,
+    pub quantity: i64,
+    pub subscription: String,
+    // #[serde(rename = "tax_rates")]
+    // pub tax_rates: Vec<Value>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomaticTax {
+    pub enabled: bool,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Prices {
+    pub object: String,
+    pub data: Vec<Price>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub url: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Price {
+    pub id: String,
+    pub object: String,
+    pub active: bool,
+    #[serde(rename = "billing_scheme")]
+    pub billing_scheme: String,
+    pub created: i64,
+    pub currency: String,
+    pub livemode: bool,
+    // #[serde(rename = "lookup_key")]
+    // pub lookup_key: Value,
+    // pub metadata: Metadata,
+    // pub nickname: Value,
+    pub product: String,
+    pub recurring: Recurring,
+    #[serde(rename = "tax_behavior")]
+    pub tax_behavior: String,
+    // #[serde(rename = "tiers_mode")]
+    // pub tiers_mode: Value,
+    // #[serde(rename = "transform_quantity")]
+    // pub transform_quantity: Value,
+    #[serde(rename = "type")]
+    pub type_field: String,
+    #[serde(rename = "unit_amount")]
+    pub unit_amount: i64,
+    #[serde(rename = "unit_amount_decimal")]
+    pub unit_amount_decimal: String,
+}
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Recurring {
+    // #[serde(rename = "aggregate_usage")]
+    // pub aggregate_usage: Value,
+    pub interval: String,
+    #[serde(rename = "interval_count")]
+    pub interval_count: i64,
+    // #[serde(rename = "trial_period_days")]
+    // pub trial_period_days: Value,
+    #[serde(rename = "usage_type")]
+    pub usage_type: String,
+}

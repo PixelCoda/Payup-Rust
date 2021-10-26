@@ -2,9 +2,9 @@
 
 ## Description
 
-A synchronous + asynchronous payment library for processing payments with rust. Work in progress. Stripe is quasi-supported if you don't need the full api.
+A synchronous + asynchronous payment library for processing payments with rust. Stripe is quasi-supported if you don't need the full api.
 
-I built this library due to a lack of synchronous payment libraries. 
+I built this library due to a lack of synchronous payment libraries. Currently im only focused on features I need for another project. 
 
 Roadmap:
 * 0.1.0: Quasi-Stripe Support

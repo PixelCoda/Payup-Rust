@@ -470,6 +470,20 @@ impl Subscription {
             status: None
         };
     }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Subscription, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/subscriptions/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Subscription>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
     pub fn post(&self, creds: Auth) ->  Result<Subscription, reqwest::Error> {
         let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/subscriptions")
         .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))

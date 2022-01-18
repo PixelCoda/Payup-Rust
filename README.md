@@ -12,6 +12,7 @@ Roadmap:
     * Ability to list/create Plans (DONE)
     * Ability to create PaymentMethods from a Card and attach to a Customer (DONE)
     * Ability to subscribe user to a plan (DONE)
+    * Ability to cancel a subscription to a plan (DONE)
 * 0.2.0: Full Stripe API Support
 * 0.3.0: Paypal Support
 * 0.4.0: Cryptocurrency Support
@@ -20,7 +21,7 @@ Roadmap:
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.0"
+payup = "0.1.2"
 ```
 
 Example:

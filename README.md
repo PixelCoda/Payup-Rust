@@ -25,7 +25,7 @@ Roadmap:
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.3"
+payup = "0.1.4"
 ```
 
 Example:
@@ -50,6 +50,24 @@ fn main() {
         },
         Err(err) => println!("{}", err),
     }
+
+
+    let get_all_invoices = payup::stripe::Invoice::list(auth.clone(), None);
+    match get_all_invoices {
+        Ok(sub) => {
+            println!("ALL_INVOICES: {:?}", sub);
+        },
+        Err(err) => println!("{}", err),
+    }
+
+    let get_one_invoice = payup::stripe::Invoice::get(auth.clone(), "in_1KM0TcGrEH09RU9uKzfi8E4x".to_string());
+    match get_one_invoice {
+        Ok(sub) => {
+            println!("SINGLE_INVOICE_GET: {:?}", sub);
+        },
+        Err(err) => println!("{}", err),
+    }
+
 
     // Build a customer object
     let mut cust = payup::stripe::Customer::new();
@@ -163,6 +181,14 @@ fn main() {
                 }
     
 
+                let get_invoices = payup::stripe::Customer::invoices(cust_id.clone(), auth.clone());
+                match get_invoices {
+                    Ok(sub) => {
+                        println!("INVOICES: {:?}", sub);
+                    },
+                    Err(err) => println!("{}", err),
+                }
+    
 
                 let subscription_cancel = payup::stripe::Subscription::cancel(auth.clone(), format!("sub_1JpgYvGrEH09RU9ueB31tuQp")).unwrap();
                 println!("subscription_cancel: {:?}", subscription_cancel);

@@ -128,6 +128,29 @@ impl Customer {
         }
 
     }
+
+
+    pub fn invoices(id: String, creds: Auth) ->  Result<crate::stripe::response::Invoices, reqwest::Error>{
+             
+        let url = format!("https://api.stripe.com/v1/invoices?customer={}", id);
+
+        
+        println!("{}", url.clone());
+
+
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+
+    }
+
     pub async fn post_async(&self, creds: Auth) ->  Result<Customer, reqwest::Error> {
         let request = reqwest::Client::new()
         .post("https://api.stripe.com/v1/customers")
@@ -307,6 +330,113 @@ impl Plan {
         }
         return params;
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Invoice {
+    pub id: Option<String>,
+    pub customer: Option<String>,
+    pub auto_advance:  Option<String>
+}
+impl Invoice {
+    // pub fn new() -> Self {
+    //     return Plan{
+    //         id: None, 
+    //         customer: None,
+    //         auto_advance: None
+    //     };
+    // }
+
+    // Status draft, open, paid, uncollectible, or void
+    pub fn list(creds: Auth, status: Option<String>) -> Result<crate::stripe::response::Invoices, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/invoices".to_string();
+
+        if status.is_some() {
+            url = format!("https://api.stripe.com/v1/invoices?status={}", status.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Invoice, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Invoice>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
+    // pub fn post(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
+    //     let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/invoices")
+    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+    //     .form(&self.to_params())
+    //     .send();
+
+    //     match request{
+    //         Ok(req) => {
+    //             let mut plan = self.clone();
+    //             let json = req.json::<crate::stripe::response::Invoice>()?;
+    //             plan.id = Some(json.id);
+    //             Ok(plan)
+    //         },
+    //         Err(err) => Err(err)
+    //     }
+    // }
+    // pub async fn post_async(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
+    //     let request = reqwest::Client::new()
+    //     .post("https://api.stripe.com/v1/invoices")
+    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+    //     .form(&self.to_params())
+    //     .send().await;
+    //     match request{
+    //         Ok(req) => {
+    //             let mut invoice = self.clone();
+    //             let json = req.json::<crate::stripe::response::Invoice>().await?;
+    //             invoice.id = Some(json.id);
+    //             Ok(invoice)
+    //         },
+    //         Err(err) => Err(err)
+    //     }
+    // }
+    // fn to_params(&self) -> Vec<(&str, &str)> {
+    //     // return Customer{client, secret};
+    //     let mut params = vec![];
+    //     match &self.amount{
+    //         Some(amount) => params.push(("amount", amount.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.currency{
+    //         Some(currency) => params.push(("currency", currency.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.interval{
+    //         Some(interval) => params.push(("interval", interval.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.product{
+    //         Some(product) => params.push(("product", product.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.active{
+    //         Some(active) => params.push(("active", active.as_str())),
+    //         None => {}
+    //     }
+    //     return params;
+    // }
 }
 
 

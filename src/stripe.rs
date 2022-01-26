@@ -13,6 +13,9 @@ pub struct Auth {
     pub secret: String,
 }
 impl Auth {
+    pub fn async_new(client: String, secret: String) -> Self {
+        return Auth{client, secret};
+    }
     pub fn new(client: String, secret: String) -> Self {
         return Auth{client, secret};
     }
@@ -28,130 +31,171 @@ pub struct Customer {
     pub phone: Option<String>
 }
 impl Customer {
-    pub fn new() -> Self {
-        return Customer{id: None, payment_method: None, description: None, email: None, name: None, phone: None};
+
+
+    /// Asynchronously lookup a stripe Customer using customer_id
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - A string representing an existing stripe customer_id
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let customer = payup::stripe::Customer::get_async(auth, "cust_").await;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<crate::stripe::response::Customer, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/customers/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<crate::stripe::response::Customer>().await?;
+        return Ok(json);
     }
-    pub fn list_all(creds: Auth) -> Vec<Self>{
-        let mut objects: Vec<Self> = Vec::new();
+
+    /// Asynchronously returns all Invoices belonging to the customer_id
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let customers_invoices = payup::stripe::Customer::invoices(auth, format!("cust_"));     
+    /// ```    
+    pub async fn async_invoices(creds: Auth, customer_id: String) -> Result<Vec<crate::stripe::response::Invoice>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::Invoice> = Vec::new();
 
         let mut has_more = true;
         let mut starting_after: Option<String> = None;
         while has_more{
-            let json = Self::list(creds.clone(), starting_after).unwrap();
+            let json = Self::get_invoices_chunk(creds.clone(), customer_id.clone(), starting_after.clone())?;
             for json_object in json.data{
-                let mut object = Customer::new();
-                object.id = Some(json_object.id);
-                object.email = json_object.email;
-                object.description = json_object.description;
-                object.name = json_object.name;
-                object.phone = json_object.phone;
-                objects.push(object);
+                objects.push(json_object);
             }
             has_more = json.has_more;
-            starting_after = objects[objects.len() - 1].id.clone();
+            starting_after = Some(objects[objects.len() - 1].id.clone());
         }
-        return objects;
-    }
-    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Customer, reqwest::Error> {
-        let mut url = format!("https://api.stripe.com/v1/customers/{}", id.clone());
-        
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Customer>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    pub fn list(creds: Auth, starting_after: Option<String>) -> Result<crate::stripe::response::Customers, reqwest::Error> {
-        let mut url = "https://api.stripe.com/v1/customers".to_string();
-
-        if starting_after.is_some() {
-            url = format!("https://api.stripe.com/v1/customers?starting_after={}", starting_after.unwrap());
-        }
-
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Customers>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-
-    
-    pub fn post(&self, creds: Auth) ->  Result<Customer, reqwest::Error> {
-        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/customers")
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .form(&self.to_params())
-        .send();
-
-        match request{
-            Ok(req) => {
-                let mut cust = self.clone();
-                let json = req.json::<crate::stripe::response::Customer>()?;
-                cust.id = Some(json.id);
-
-
-
-                Ok(cust)
-            },
-            Err(err) => Err(err)
-        }
-    }
-    pub fn payment_methods(id: String, method_type: String, creds: Auth) ->  Result<crate::stripe::response::PaymentMethods, reqwest::Error>{
-
-   
-
-             
-        let url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}", id, method_type);
-
-        
-        println!("{}", url.clone());
-
-
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::PaymentMethods>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-
+        return Ok(objects);
     }
 
 
-    pub fn invoices(id: String, creds: Auth) ->  Result<crate::stripe::response::Invoices, reqwest::Error>{
-             
-        let url = format!("https://api.stripe.com/v1/invoices?customer={}", id);
+    /// Asynchronously returns all stripe customers owned by the account.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let customers = payup::stripe::Customer::list_async(auth).await;
+    /// ```
+    pub async fn async_list(creds: Auth) -> Result<Vec<crate::stripe::response::Customer>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::Customer> = Vec::new();
 
-        
-        println!("{}", url.clone());
-
-
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone());
         }
-
+        return Ok(objects);
     }
 
-    pub async fn post_async(&self, creds: Auth) ->  Result<Customer, reqwest::Error> {
+    /// Asynchronously returns an empty Customer object 
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut cust = payup::stripe::Customer::new();
+    /// cust.name = Some("Rust Test".to_string());
+    /// cust.description = Some("A test customer from rust.".to_string());
+    /// cust.phone = Some("333-333-3333".to_string());
+    /// cust.email = Some("rust@test.com".to_string());
+    /// cust.payment_method = None;
+    /// ```
+    pub async fn async_new() -> Self {
+        return Customer{id: None, payment_method: None, description: None, email: None, name: None, phone: None};
+    }
+
+
+    /// Asynchronously returns all PaymentMethods belonging to the customer_id
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let customers_payment_methods = payup::stripe::Customer::payment_methods_async(auth, format!("cust_"), format!("card")).await;     
+    /// ```
+    pub async fn async_payment_methods(creds: Auth, customer_id: String, method_type: String) -> Result<Vec<crate::stripe::response::PaymentMethod>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::PaymentMethod> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::get_payment_methods_chunk_async(creds.clone(), customer_id.clone(), method_type.clone(), starting_after.clone()).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone());
+        }
+        return Ok(objects);
+    }
+
+
+    /// Asynchronously POSTs a new customer to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Build a customer object
+    /// let mut cust = payup::stripe::Customer::new();
+    /// cust.name = Some("Rust Test".to_string());
+    /// cust.description = Some("A test customer from rust.".to_string());
+    /// cust.phone = Some("333-333-3333".to_string());
+    /// cust.email = Some("rust@test.com".to_string());
+    /// cust.payment_method = None;
+    /// 
+    /// // Post customer to stripe and update the local cust variable
+    /// let customer = cust.post_async(auth).await.unwrap();
+    /// ```
+    pub async fn async_post(&self, creds: Auth) ->  Result<crate::stripe::response::Customer, reqwest::Error> {
         let request = reqwest::Client::new()
         .post("https://api.stripe.com/v1/customers")
         .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
@@ -159,17 +203,277 @@ impl Customer {
         .send().await;
         match request{
             Ok(req) => {
-                let mut cust = self.clone();
                 let json = req.json::<crate::stripe::response::Customer>().await?;
-                cust.id = Some(json.id);
-
-
-
-                Ok(cust)
+            
+                return Ok(json);
             },
             Err(err) => Err(err)
         }
     }
+
+
+ 
+    /// Lookup a stripe Customer using customer_id
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - A string representing an existing stripe customer_id
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let customer = payup::stripe::Customer::get(auth, "cust_");
+    /// ```
+    pub fn get(auth: Auth, id: String) -> Result<crate::stripe::response::Customer, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/customers/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(auth.client.as_str(), Some(auth.secret.as_str())).send()?;
+        let json = request.json::<crate::stripe::response::Customer>()?;
+        return Ok(json);
+    }
+
+    /// Returns all Invoices belonging to the customer_id
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let customers_invoices = payup::stripe::Customer::invoices(auth, format!("cust_"));     
+    /// ```    
+    pub fn invoices(creds: Auth, customer_id: String) -> Result<Vec<crate::stripe::response::Invoice>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::Invoice> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::get_invoices_chunk(creds.clone(), customer_id.clone(), starting_after.clone())?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone());
+        }
+        return Ok(objects);
+    }
+
+
+    /// Returns all stripe customers
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let customers = payup::stripe::Customer::list(auth.clone());
+    /// ```
+    pub fn list(creds: Auth) -> Result<Vec<crate::stripe::response::Customer>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::Customer> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after)?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone());
+        }
+        return Ok(objects);
+    }
+
+
+
+
+    /// Returns an empty Customer object
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut cust = payup::stripe::Customer::new();
+    /// cust.name = Some("Rust Test".to_string());
+    /// cust.description = Some("A test customer from rust.".to_string());
+    /// cust.phone = Some("333-333-3333".to_string());
+    /// cust.email = Some("rust@test.com".to_string());
+    /// cust.payment_method = None;
+    /// ```
+    pub fn new() -> Self {
+        return Customer{id: None, payment_method: None, description: None, email: None, name: None, phone: None};
+    }
+
+ 
+
+   
+    /// Returns all PaymentMethods belonging to the customer_id
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let customers_payment_methods = payup::stripe::Customer::payment_methods(auth, format!("cust_"), format!("card"));     
+    /// ```
+    pub fn payment_methods(creds: Auth, customer_id: String, method_type: String) -> Result<Vec<crate::stripe::response::PaymentMethod>, reqwest::Error>{
+        let mut objects: Vec<crate::stripe::response::PaymentMethod> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::get_payment_methods_chunk(creds.clone(), customer_id.clone(), method_type.clone(), starting_after.clone())?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone());
+        }
+        return Ok(objects);
+    }
+
+
+
+
+ 
+
+    /// POSTs a new customer to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment you should load values from environment variables.
+    /// let client = format!("sk_test_");
+    /// let secret = format!("");
+    ///
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Build a customer object
+    /// let mut cust = payup::stripe::Customer::new();
+    /// cust.name = Some("Rust Test".to_string());
+    /// cust.description = Some("A test customer from rust.".to_string());
+    /// cust.phone = Some("333-333-3333".to_string());
+    /// cust.email = Some("rust@test.com".to_string());
+    /// cust.payment_method = None;
+    /// 
+    /// // Post customer to stripe and update the local cust variable
+    /// let customer = cust.post(auth).unwrap();
+    /// ```
+    pub fn post(&self, creds: Auth) ->  Result<crate::stripe::response::Customer, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/customers")
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .form(&self.to_params())
+        .send();
+
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Customer>()?;
+                Ok(json)
+            },
+            Err(err) => Err(err)
+        }
+    }
+
+ 
+
+   
+   
+
+
+    fn get_invoices_chunk(creds: Auth, customer_id: String, starting_after: Option<String>) ->  Result<crate::stripe::response::Invoices, reqwest::Error>{  
+        let mut url = format!("https://api.stripe.com/v1/invoices?customer={}", customer_id);
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/invoices?customer={}&starting_after={}", customer_id, starting_after.unwrap())
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+  
+        let json = request.json::<crate::stripe::response::Invoices>()?;
+        return Ok(json);
+    }
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>) -> Result<crate::stripe::response::Customers, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/customers".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/customers?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<crate::stripe::response::Customers>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>) -> Result<crate::stripe::response::Customers, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/customers".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/customers?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+ 
+        let json = request.json::<crate::stripe::response::Customers>().await?;
+        return Ok(json);
+    }
+
+    fn get_payment_methods_chunk(creds: Auth, customer_id: String, method_type: String, starting_after: Option<String>) ->  Result<crate::stripe::response::PaymentMethods, reqwest::Error>{
+        let mut url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}", customer_id, method_type);
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}&starting_after={}", customer_id, method_type, starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+   
+        let json = request.json::<crate::stripe::response::PaymentMethods>()?;
+        return Ok(json);
+    }
+
+    async fn get_payment_methods_chunk_async(creds: Auth, customer_id: String, method_type: String, starting_after: Option<String>) ->  Result<crate::stripe::response::PaymentMethods, reqwest::Error>{
+        let mut url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}", customer_id, method_type);
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}&starting_after={}", customer_id, method_type, starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+     
+        let json = request.json::<crate::stripe::response::PaymentMethods>().await?;
+        return Ok(json);
+    }
+
     fn to_params(&self) -> Vec<(&str, &str)> {
         // return Customer{client, secret};
         let mut params = vec![];
@@ -470,24 +774,7 @@ impl Card {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Address {
-    pub city: Option<String>,
-    pub country: Option<String>,
-    pub line1: Option<String>,
-    pub line2: Option<String>,
-    pub postal_code: Option<String>,
-    pub state: Option<String>,
-}
 
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BillingDetails {
-    pub address: Option<Address>,
-    pub email: Option<String>,
-    pub name: Option<String>,
-    pub phone: Option<String>,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PaymentMethod {
@@ -498,7 +785,7 @@ pub struct PaymentMethod {
     pub livemode:  Option<bool>,
     pub name: Option<String>,
     pub phone: Option<String>,
-    pub billing_details: Option<BillingDetails>,
+    pub billing_details: Option<crate::stripe::response::BillingDetails>,
     pub card: Option<Card>,
     pub type_field: Option<String>,
 }
@@ -517,27 +804,22 @@ impl PaymentMethod {
             type_field: None
         };
     }
-    pub fn attach(&self, customer: Customer, creds: Auth) ->  Result<bool, reqwest::Error>{
+    pub fn attach(&self, customer: crate::stripe::response::Customer, creds: Auth) ->  Result<bool, reqwest::Error>{
 
         match &self.id{
             Some(id) => {
-
-                match customer.id {
-                    Some(cust_id) => {
-                        let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id);
-                        let params = [
-                            ("customer", cust_id.as_str())
-                        ];
-                        let request = reqwest::blocking::Client::new().post(url)
-                        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-                        .form(&params)
-                        .send()?;
-                        return Ok(true);
-                    },
-                    None => {
-                        return Ok(false);
-                    }
-                }
+               
+                let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id);
+                let params = [
+                    ("customer", customer.id.as_str())
+                ];
+                let request = reqwest::blocking::Client::new().post(url)
+                .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+                .form(&params)
+                .send()?;
+                return Ok(true);
+            
+                
             },
             None => return Ok(false)
         }
@@ -667,6 +949,26 @@ impl Subscription {
             Err(err) => Err(err)
         }
     }
+
+    /// Returns a subscription
+    ///
+    /// # Arguments
+    ///
+    /// * `creds` - A struct containing the client + secret for authentication over the stripe API.
+    /// * `id` - A string representing an existing stripe subscription_id
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Client and Secret for Stripe account
+    /// // In a production environment...load values from environment variables.
+    /// let client = format!("sk_test_51Jo2sKGrEH09RU9uu8d8ARKasYUKHXAHk4vUNup1JLgP5wFnQQf6t7UpKfh7woVMhI9oeuziolW2dK1uwmgAheVI00bN8ews6g");
+    /// let secret = format!("");
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    /// 
+    /// let get_subscription = payup::stripe::Subscription::get(auth, "subscription_id");
+    /// ```
     pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Subscription, reqwest::Error> {
         let mut url = format!("https://api.stripe.com/v1/subscriptions/{}", id.clone());
         

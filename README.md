@@ -13,10 +13,14 @@ Roadmap:
     * Ability to create PaymentMethods from a Card and attach to a Customer (DONE)
     * Ability to list all PaymentMethods for customer.id (DONE)
     * Ability to get Customer by id (DONE)
-     * Ability to get PaymentMethod by id (DONE)
+    * Ability to get PaymentMethod by id (DONE)
     * Ability to get Subscription by id (DONE)
     * Ability to subscribe user to a plan (DONE)
     * Ability to cancel a subscription to a plan (DONE)
+    * Ability to change default funding source for Subscription (DONE)
+    * Ability to list Invoices for Customer (DONE)
+    * Ability to list all Invoices (DONE)
+    * Ability to get invoice by id (DONE)
 * 0.2.0: Full Stripe API Support
 * 0.3.0: Paypal Support
 * 0.4.0: Cryptocurrency Support
@@ -25,12 +29,11 @@ Roadmap:
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.4"
+payup = "0.1.41"
 ```
 
 Example:
 ```rust
-
 extern crate payup;
 
 fn main() {
@@ -159,7 +162,7 @@ fn main() {
                 subscription.price_items.push(format!("price_1Jp6siGrEH09RU9u95Xp7soZ"));
                 subscription = subscription.post(auth.clone()).unwrap();
             
-                println!("subscription: {:?}", subscription);
+                println!("subscription: {:?}", subscription.clone());
 
 
                 let get_subscription = payup::stripe::Subscription::get(auth.clone(), subscription.clone().id.unwrap());
@@ -188,7 +191,31 @@ fn main() {
                     },
                     Err(err) => println!("{}", err),
                 }
-    
+
+                // Create a new card
+                let mut new_card = payup::stripe::Card::new();
+                new_card.number = Some(format!("4242424242424242"));
+                new_card.exp_month = Some(format!("01"));
+                new_card.exp_year = Some(format!("2023"));
+                new_card.cvc = Some(format!("314"));
+
+
+                // Change Payment Method
+                let mut new_payment_method = payup::stripe::PaymentMethod::new();
+                new_payment_method.method_type = Some(format!("card"));
+                new_payment_method.card = Some(new_card);
+                new_payment_method = new_payment_method.post(auth.clone()).unwrap();
+                println!("new_payment_method: {:?}", new_payment_method.clone());
+            
+                let new_payment_method_id = payment_method.id.clone().unwrap();
+                
+
+                let mut new_subscription = payup::stripe::Subscription::new();
+                new_subscription.default_payment_method = Some(new_payment_method_id);
+                new_subscription.id = subscription.clone().id;
+                let nnew_subscription = new_subscription.update(auth.clone());
+                println!("new_subscription: {:?}", nnew_subscription);
+
 
                 let subscription_cancel = payup::stripe::Subscription::cancel(auth.clone(), format!("sub_1JpgYvGrEH09RU9ueB31tuQp")).unwrap();
                 println!("subscription_cancel: {:?}", subscription_cancel);
@@ -203,7 +230,6 @@ fn main() {
 
 
 }
-
 
 ```
 ## License

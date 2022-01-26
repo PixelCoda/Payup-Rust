@@ -25,7 +25,7 @@ Roadmap:
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.2"
+payup = "0.1.3"
 ```
 
 Example:

@@ -11,6 +11,10 @@ Roadmap:
     * Ability to list/create Customers (DONE)
     * Ability to list/create Plans (DONE)
     * Ability to create PaymentMethods from a Card and attach to a Customer (DONE)
+    * Ability to list all PaymentMethods for customer.id (DONE)
+    * Ability to get Customer by id (DONE)
+     * Ability to get PaymentMethod by id (DONE)
+    * Ability to get Subscription by id (DONE)
     * Ability to subscribe user to a plan (DONE)
     * Ability to cancel a subscription to a plan (DONE)
 * 0.2.0: Full Stripe API Support
@@ -33,11 +37,19 @@ fn main() {
 
     // Client and Secret for Stripe account
     // In a production environment...load values from environment variables.
-    let client = format!("sk_test_XXXX");
+    let client = format!("sk_test_");
     let secret = format!("");
 
     // Create the Authentication refererence
     let auth = payup::stripe::Auth::new(client, secret);
+
+    let get_subscription = payup::stripe::Subscription::get(auth.clone(), "sub_1JpgYvGrEH09RU9ueB31tuQp".to_string());
+    match get_subscription {
+        Ok(sub) => {
+            println!("SUBSCRIPTION_GET: {:?}", sub);
+        },
+        Err(err) => println!("{}", err),
+    }
 
     // Build a customer object
     let mut cust = payup::stripe::Customer::new();
@@ -48,24 +60,41 @@ fn main() {
     cust.payment_method = None;
     
     // Post customer to stripe and update the local cust variable
-    // For async use: cust.post_async(auth.clone()).await?;
     cust = cust.post(auth.clone()).unwrap();
+
+    let cust_id = cust.id.clone().unwrap();
+
+
+    let get_cust = payup::stripe::Customer::get(auth.clone(), cust_id.clone());
+    match get_cust {
+        Ok(sub) => {
+            println!("CUST_GET: {:?}", sub.clone());
+
+
+  
+
+
+
+        },
+        Err(err) => println!("{}", err),
+    }
+
 
     // Fetch customers from stripe account
     let customers = payup::stripe::Customer::list_all(auth.clone());
-    println!("customers: {:?}", customers);
+    // println!("customers: {:?}", customers);
 
     // Create a new plan
     let mut new_plan = payup::stripe::Plan::new();
     new_plan.amount = Some("200".to_string());
     new_plan.currency = Some("usd".to_string());
     new_plan.interval = Some("month".to_string());
-    new_plan.product = Some("prod_XXX".to_string());
+    new_plan.product = Some("prod_KSywTYVmG9jVC4".to_string());
     new_plan = new_plan.post(auth.clone()).unwrap();
 
     // Fetch plans from stripe account
     let plans = payup::stripe::Plan::list_all(auth.clone());
-    println!("plans: {:?}", plans);
+    // println!("plans: {:?}", plans);
 
     // Create a new card
     let mut card = payup::stripe::Card::new();
@@ -81,29 +110,67 @@ fn main() {
     payment_method = payment_method.post(auth.clone()).unwrap();
     println!("payment_method: {:?}", payment_method.clone());
 
+
+    let payment_method_id = payment_method.id.clone().unwrap();
+
+
+    let get_payment_method = payup::stripe::PaymentMethod::get(auth.clone(), payment_method_id.clone());
+    match get_payment_method {
+        Ok(sub) => {
+            println!("PAYMENT_METHOD_GET: {:?}", sub);
+        },
+        Err(err) => println!("{}", err),
+    }
+
+
     // Attach the payment method to the customer created earlier
     let attached = payment_method.attach(cust.clone(), auth.clone());
     
     // Did the attach work?
     match attached {
         Ok(is_attached) => {
+            println!("{}", is_attached);
             if is_attached {
-                println!("Payment Method ({}) is now attached to Customer ({})", payment_method.id.clone().unwrap(), cust.id.clone().unwrap());
+                println!("Payment Method ({}) is now attached to Customer ({})", payment_method_id.clone(), cust_id.clone());
             
             
                 // Subscript the customer to the new_plan.id....
                 let mut subscription = payup::stripe::Subscription::new();
+                subscription.customer = Some(cust_id.clone());
                 subscription.default_payment_method = payment_method.id.clone();
-                subscription.customer = cust.id.clone();
-                subscription.default_payment_method = payment_method.id.clone();
-                subscription.price_items.push(new_plan.id.clone().unwrap());
+                subscription.price_items.push(format!("price_1Jp6siGrEH09RU9u95Xp7soZ"));
                 subscription = subscription.post(auth.clone()).unwrap();
-                
-
+            
                 println!("subscription: {:?}", subscription);
+
+
+                let get_subscription = payup::stripe::Subscription::get(auth.clone(), subscription.clone().id.unwrap());
+                match get_subscription {
+                    Ok(sub) => {
+                        println!("SUBSCRIPTION_GET: {:?}", sub);
+                    },
+                    Err(err) => println!("{}", err),
+                }
+
+
+
+                let get_payment_methods = payup::stripe::Customer::payment_methods(cust_id.clone(), format!("card"), auth.clone());
+                match get_payment_methods {
+                    Ok(sub) => {
+                        println!("PAYMENT_METHODS_GET: {:?}", sub);
+                    },
+                    Err(err) => println!("{}", err),
+                }
+    
+
+
+                let subscription_cancel = payup::stripe::Subscription::cancel(auth.clone(), format!("sub_1JpgYvGrEH09RU9ueB31tuQp")).unwrap();
+                println!("subscription_cancel: {:?}", subscription_cancel);
+
+
             }
         },
-        Err(err) => println!("{}", err)
+        Err(err) => println!("fail: {}", err)
     }
 
 

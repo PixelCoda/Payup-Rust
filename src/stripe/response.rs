@@ -270,6 +270,16 @@ pub struct Refunds {
     pub url: String,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PaymentMethods {
+    pub object: String,
+    pub url: String,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub data: Vec<PaymentMethod>,
+}
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -52,6 +52,20 @@ impl Customer {
         }
         return objects;
     }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Customer, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/customers/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Customer>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
     pub fn list(creds: Auth, starting_after: Option<String>) -> Result<crate::stripe::response::Customers, reqwest::Error> {
         let mut url = "https://api.stripe.com/v1/customers".to_string();
 
@@ -70,6 +84,8 @@ impl Customer {
             Err(err) => Err(err)
         }
     }
+
+    
     pub fn post(&self, creds: Auth) ->  Result<Customer, reqwest::Error> {
         let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/customers")
         .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
@@ -88,6 +104,29 @@ impl Customer {
             },
             Err(err) => Err(err)
         }
+    }
+    pub fn payment_methods(id: String, method_type: String, creds: Auth) ->  Result<crate::stripe::response::PaymentMethods, reqwest::Error>{
+
+   
+
+             
+        let url = format!("https://api.stripe.com/v1/customers/{}/payment_methods?type={}", id, method_type);
+
+        
+        println!("{}", url.clone());
+
+
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::PaymentMethods>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+
     }
     pub async fn post_async(&self, creds: Auth) ->  Result<Customer, reqwest::Error> {
         let request = reqwest::Client::new()
@@ -374,6 +413,20 @@ impl PaymentMethod {
         }
 
         return Ok(false);
+    }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::PaymentMethod, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/payment_methods/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::PaymentMethod>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
     }
     pub fn post(&self, creds: Auth) ->  Result<PaymentMethod, reqwest::Error> {
         let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/payment_methods")

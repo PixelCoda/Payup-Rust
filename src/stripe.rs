@@ -567,7 +567,7 @@ impl Charge {
     /// let captured_charge = payup::stripe::Charge::capture(charge, "cust_");
     /// ```
     pub fn capture(&self, creds: Auth) ->  Result<Self, reqwest::Error>{
-        let url = format!("https://api.stripe.com/v1/charges/{}/attach", self.id.clone().unwrap());
+        let url = format!("https://api.stripe.com/v1/charges/{}/capture", self.id.clone().unwrap());
 
         let request = reqwest::blocking::Client::new().post(url)
             .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
@@ -1392,6 +1392,533 @@ impl Customer {
     }
 }
 
+
+
+/// Represents a charge to a credit or a debit card.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Dispute {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    pub amount: Option<i64>,
+    // #[serde(rename = "balance_transactions")]
+    // pub balance_transactions: Vec<BalanceTransaction>,
+    pub charge: Option<String>,
+    pub created: Option<i64>,
+    pub currency: Option<String>,
+    pub evidence: Option<Evidence>,
+    #[serde(rename = "evidence_details")]
+    pub evidence_details: Option<EvidenceDetails>,
+    #[serde(rename = "is_charge_refundable")]
+    pub is_charge_refundable: Option<bool>,
+    pub livemode: Option<bool>,
+    pub submit: Option<bool>,
+    // pub metadata: Metadata,
+    #[serde(rename = "payment_intent")]
+    pub payment_intent: Option<String>,
+    pub reason: Option<String>,
+    pub status: Option<String>,
+}
+impl Dispute {
+
+    /// Returns an empty Dispute object
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut dispute = payup::stripe::Dispute::new();
+    /// dispute.amount = Some(100);
+    /// ```
+    pub fn new() -> Self {
+        return Dispute{
+            id: None, 
+            object: None,
+            amount: None, 
+            charge: None,
+            created: None,
+            currency: None,
+            // balance_transactions: None,
+            // captured: None,
+            evidence: None, 
+            evidence_details: None,
+            is_charge_refundable: None,
+            livemode: None,
+            submit: None,
+            payment_intent: None,
+            reason: None,
+            status: None
+        };
+    }
+
+    /// Asynchronously close a dispute.
+    /// Closing the dispute for a charge indicates that you do not have any evidence to submit and are essentially dismissing the dispute, acknowledging it as lost.
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut dispute = payup::stripe::Dispute::new();
+    /// dispute.id = Some(format!("dp_"));
+    ///
+    /// dispute = dispute.async_close(auth.clone()).await?;
+    /// ```
+    pub async fn async_close(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new().post(format!("https://api.stripe.com/v1/disputes/{}/close", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+
+
+    /// Asynchronously retrieves the dispute with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the dispute you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let dispute = payup::stripe::Dispute::async_get(auth, "ch_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/disputes/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously returns all stripe Disputes.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let disputes = payup::stripe::Dispute::async_list(auth).await?;
+    /// ```
+    pub async fn async_list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// Asynchronously POSTs an update to an existing Dispute
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Crate some evidence to update the dispute with
+    /// let mut evidence = payup::stripe::Evidence::new();
+    /// evidence.billing_address = Some(format!(""));
+    /// evidence.cancellation_policy = Some(format!(""));
+    ///
+    /// let mut dispute = payup::stripe::Dispute::new();
+    /// dispute.id = Some(format!("dp_"));
+    /// dispute.evidence = Some(evidence);
+    ///
+    /// // Submit the evidence to the bank
+    /// dispute.submit = Some(true);
+    ///
+    /// // Update the dispute
+    /// dispute = dispute.async_update(auth.clone()).await?;
+    /// ```
+    pub async fn async_update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new().post(format!("https://api.stripe.com/v1/disputes/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Close a dispute.
+    /// Closing the dispute for a charge indicates that you do not have any evidence to submit and are essentially dismissing the dispute, acknowledging it as lost.
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut dispute = payup::stripe::Dispute::new();
+    /// dispute.id = Some(format!("dp_"));
+    ///
+    /// dispute = dispute.async_close(auth.clone())?;
+    /// ```
+    pub fn close(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post(format!("https://api.stripe.com/v1/disputes/{}/close", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Retrieves the dispute with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the dispute you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let dispute = payup::stripe::Dispute::get(auth, "ch_")?;
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/disputes/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Returns all stripe disputes.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let charges = payup::stripe::Dispute::list(auth)?;
+    /// ```
+    pub fn list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after)?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+
+    /// POSTs an update to an existing Dispute
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Crate some evidence to update the dispute with
+    /// let mut evidence = payup::stripe::Evidence::new();
+    /// evidence.billing_address = Some(format!(""));
+    /// evidence.cancellation_policy = Some(format!(""));
+    ///
+    /// let mut dispute = payup::stripe::Dispute::new();
+    /// dispute.id = Some(format!("dp_"));
+    /// dispute.evidence = Some(evidence);
+    ///
+    /// // Submit the evidence to the bank
+    /// dispute.submit = Some(true);
+    ///
+    /// // Update the dispute
+    /// dispute = dispute.async_update(auth.clone())?;
+    /// ```
+    pub fn update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post(format!("https://api.stripe.com/v1/disputes/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>) -> Result<Disputes, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/disputes".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/disputes?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<Disputes>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>) -> Result<Disputes, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/disputes".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/disputes?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+
+        let json = request.json::<Disputes>().await?;
+        return Ok(json);
+    }
+
+    fn to_params(&self) -> Vec<(&str, &str)> {
+        let mut params = vec![];
+        match &self.evidence{
+            Some(evidence) => {
+
+                match &evidence.access_activity_log{
+                    Some(access_activity_log) => {
+                        params.push(("evidence[access_activity_log]", access_activity_log.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.billing_address{
+                    Some(billing_address) => {
+                        params.push(("evidence[billing_address]", billing_address.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.cancellation_policy{
+                    Some(cancellation_policy) => {
+                        params.push(("evidence[cancellation_policy]", cancellation_policy.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.cancellation_policy_disclosure{
+                    Some(cancellation_policy_disclosure) => {
+                        params.push(("evidence[cancellation_policy_disclosure]", cancellation_policy_disclosure.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.cancellation_rebuttal{
+                    Some(cancellation_rebuttal) => {
+                        params.push(("evidence[cancellation_rebuttal]", cancellation_rebuttal.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.customer_communication{
+                    Some(customer_communication) => {
+                        params.push(("evidence[customer_communication]", customer_communication.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.customer_email_address{
+                    Some(customer_email_address) => {
+                        params.push(("evidence[customer_email_address]", customer_email_address.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.customer_name{
+                    Some(customer_name) => {
+                        params.push(("evidence[customer_name]", customer_name.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.customer_purchase_ip{
+                    Some(customer_purchase_ip) => {
+                        params.push(("evidence[customer_purchase_ip]", customer_purchase_ip.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.customer_signature{
+                    Some(customer_signature) => {
+                        params.push(("evidence[customer_signature]", customer_signature.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.duplicate_charge_documentation{
+                    Some(duplicate_charge_documentation) => {
+                        params.push(("evidence[duplicate_charge_documentation]", duplicate_charge_documentation.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.duplicate_charge_explanation{
+                    Some(duplicate_charge_explanation) => {
+                        params.push(("evidence[duplicate_charge_explanation]", duplicate_charge_explanation.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.duplicate_charge_id{
+                    Some(duplicate_charge_id) => {
+                        params.push(("evidence[duplicate_charge_id]", duplicate_charge_id.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.product_description{
+                    Some(product_description) => {
+                        params.push(("evidence[product_description]", product_description.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.receipt{
+                    Some(receipt) => {
+                        params.push(("evidence[receipt]", receipt.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.refund_policy{
+                    Some(refund_policy) => {
+                        params.push(("evidence[refund_policy]", refund_policy.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.refund_policy_disclosure{
+                    Some(refund_policy_disclosure) => {
+                        params.push(("evidence[refund_policy_disclosure]", refund_policy_disclosure.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.refund_refusal_explanation{
+                    Some(refund_refusal_explanation) => {
+                        params.push(("evidence[refund_refusal_explanation]", refund_refusal_explanation.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.service_date{
+                    Some(service_date) => {
+                        params.push(("evidence[service_date]", service_date.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.service_documentation{
+                    Some(service_documentation) => {
+                        params.push(("evidence[service_documentation]", service_documentation.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.shipping_address{
+                    Some(shipping_address) => {
+                        params.push(("evidence[shipping_address]", shipping_address.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.shipping_carrier{
+                    Some(shipping_carrier) => {
+                        params.push(("evidence[shipping_carrier]", shipping_carrier.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.shipping_date{
+                    Some(shipping_date) => {
+                        params.push(("evidence[shipping_date]", shipping_date.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.shipping_documentation{
+                    Some(shipping_documentation) => {
+                        params.push(("evidence[shipping_documentation]", shipping_documentation.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.shipping_tracking_number{
+                    Some(shipping_tracking_number) => {
+                        params.push(("evidence[shipping_tracking_number]", shipping_tracking_number.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.uncategorized_file{
+                    Some(uncategorized_file) => {
+                        params.push(("evidence[uncategorized_file]", uncategorized_file.as_str()));
+                    },
+                    None => {}
+                }
+
+                match &evidence.uncategorized_text{
+                    Some(uncategorized_text) => {
+                        params.push(("evidence[uncategorized_text]", uncategorized_text.as_str()));
+                    },
+                    None => {}
+                }
+
+
+
+            },
+            None => {}
+        }
+        // "metadata[order_id]"=6735
+        // match &self.metadata{
+        //     Some(metadata) => params.push(("metadata", metadata.as_str())),
+        //     None => {}
+        // }
+        match &self.submit{
+            Some(submit) => {
+
+                if *submit{
+                    params.push(("submit", "true"));
+                } else {
+                    params.push(("submit", "false"));
+                }
+
+
+               
+
+            },
+            None => {}
+        }
+        return params;
+    }
+
+}
+
+
 // TODO - Finish Implementation
 /// Invoices are statements of amounts owed by a customer.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -1537,20 +2064,25 @@ impl PaymentMethod {
 
         match &self.id{
             Some(id) => {
-               
-                let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id.clone());
+
+                match &customer.id{
+                    Some(cust_id) => {
+  
+                        let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id.clone());
 
                 
-                let params = [
-                    ("customer", id.as_str())
-                ];
-                let request = reqwest::blocking::Client::new().post(url)
-                .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-                .form(&params)
-                .send()?;
-                return Ok(true);
+                        let params = [
+                            ("customer", cust_id.as_str())
+                        ];
+                        let request = reqwest::blocking::Client::new().post(url)
+                        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+                        .form(&params)
+                        .send()?;
+                        return Ok(true);
+                    },
+                    None => return Ok(false)
+                }
             
-                
             },
             None => return Ok(false)
         }
@@ -1883,11 +2415,11 @@ pub struct Subscription {
     pub quantity: Option<i64>,
     pub start_date: Option<i64>,
     pub status: Option<String>,
-    pub price_items: Vec<String>
+    pub price_items: Option<Vec<String>>
 }
 impl Subscription {
     pub fn new() -> Self {
-        let price_items: Vec<String> = Vec::new();
+      
         return Subscription{
             id: None, 
             billing_cycle_anchor: None, 
@@ -1899,7 +2431,7 @@ impl Subscription {
             current_period_end: None, 
             current_period_start: None,
             customer: None,
-            price_items: price_items,
+            price_items: None,
             days_until_due: None,
             default_payment_method: None,
             ended_at: None,
@@ -1972,22 +2504,16 @@ impl Subscription {
             Err(err) => Err(err)
         }
     }
-    pub fn post(&self, creds: Auth) ->  Result<Subscription, reqwest::Error> {
+    pub fn post(&self, creds: Auth) -> Result<Subscription, reqwest::Error>{
         let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/subscriptions")
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .form(&self.to_params())
-        .send();
-
-        match request{
-            Ok(req) => {
-                let mut plan = self.clone();
-                let json = req.json::<crate::stripe::response::Subscription>()?;
-                plan.id = json.id;
-                Ok(plan)
-            },
-            Err(err) => Err(err)
-        }
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+    
+        let json = request.json::<Subscription>()?;
+        Ok(json)
     }
+
     fn to_params(&self) -> Vec<(&str, &str)> {
         // return Customer{client, secret};
         let mut params = vec![];
@@ -2001,15 +2527,28 @@ impl Subscription {
             None => {}
         }
 
-        let mut ii = 0;
-        for (item) in &self.price_items{
-            if ii < 20{
-                if ii == 0{
-                    params.push(("items[0][price]", item.as_str()));
+        match &self.price_items{
+
+            Some(price_items) => {
+
+
+                let mut ii = 0;
+                for (item) in price_items{
+                    if ii < 20{
+                        if ii == 0{
+                            params.push(("items[0][price]", item.as_str()));
+                        }
+                        ii+=1;
+                    }
                 }
-                ii+=1;
-            }
+
+            },
+            None => {}
+
         }
+
+
+   
      
         return params;
     }
@@ -2144,4 +2683,121 @@ pub struct Customers {
     #[serde(rename = "has_more")]
     pub has_more: bool,
     pub data: Vec<Customer>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Disputes {
+    pub object: String,
+    pub url: String,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub data: Vec<Dispute>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Evidence {
+    #[serde(rename = "access_activity_log")]
+    pub access_activity_log: Option<String>,
+    #[serde(rename = "billing_address")]
+    pub billing_address: Option<String>,
+    #[serde(rename = "cancellation_policy")]
+    pub cancellation_policy: Option<String>,
+    #[serde(rename = "cancellation_policy_disclosure")]
+    pub cancellation_policy_disclosure: Option<String>,
+    #[serde(rename = "cancellation_rebuttal")]
+    pub cancellation_rebuttal: Option<String>,
+    #[serde(rename = "customer_communication")]
+    pub customer_communication: Option<String>,
+    #[serde(rename = "customer_email_address")]
+    pub customer_email_address: Option<String>,
+    #[serde(rename = "customer_name")]
+    pub customer_name: Option<String>,
+    #[serde(rename = "customer_purchase_ip")]
+    pub customer_purchase_ip: Option<String>,
+    #[serde(rename = "customer_signature")]
+    pub customer_signature: Option<String>,
+    #[serde(rename = "duplicate_charge_documentation")]
+    pub duplicate_charge_documentation: Option<String>,
+    #[serde(rename = "duplicate_charge_explanation")]
+    pub duplicate_charge_explanation: Option<String>,
+    #[serde(rename = "duplicate_charge_id")]
+    pub duplicate_charge_id: Option<String>,
+    #[serde(rename = "product_description")]
+    pub product_description: Option<String>,
+    pub receipt: Option<String>,
+    #[serde(rename = "refund_policy")]
+    pub refund_policy: Option<String>,
+    #[serde(rename = "refund_policy_disclosure")]
+    pub refund_policy_disclosure: Option<String>,
+    #[serde(rename = "refund_refusal_explanation")]
+    pub refund_refusal_explanation: Option<String>,
+    #[serde(rename = "service_date")]
+    pub service_date: Option<String>,
+    #[serde(rename = "service_documentation")]
+    pub service_documentation: Option<String>,
+    #[serde(rename = "shipping_address")]
+    pub shipping_address: Option<String>,
+    #[serde(rename = "shipping_carrier")]
+    pub shipping_carrier: Option<String>,
+    #[serde(rename = "shipping_date")]
+    pub shipping_date: Option<String>,
+    #[serde(rename = "shipping_documentation")]
+    pub shipping_documentation: Option<String>,
+    #[serde(rename = "shipping_tracking_number")]
+    pub shipping_tracking_number: Option<String>,
+    #[serde(rename = "uncategorized_file")]
+    pub uncategorized_file: Option<String>,
+    #[serde(rename = "uncategorized_text")]
+    pub uncategorized_text: Option<String>,
+}
+impl Evidence {
+    pub fn new() -> Self {
+        return Evidence{
+            access_activity_log: None,
+            billing_address: None,
+            cancellation_policy: None,
+            cancellation_policy_disclosure: None,
+            cancellation_rebuttal: None,
+            customer_communication: None,
+            customer_email_address: None,
+            customer_name: None,
+            customer_purchase_ip: None,
+            customer_signature: None,
+            duplicate_charge_documentation: None,
+            duplicate_charge_explanation: None,
+            duplicate_charge_id: None,
+            product_description: None,
+            receipt: None,
+            refund_policy: None,
+            refund_policy_disclosure: None,
+            refund_refusal_explanation: None,
+            service_date: None,
+            service_documentation: None,
+            shipping_address: None,
+            shipping_carrier: None,
+            shipping_date: None,
+            shipping_documentation: None,
+            shipping_tracking_number: None,
+            uncategorized_file: None,
+            uncategorized_text: None
+        };
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct EvidenceDetails {
+    #[serde(rename = "due_by")]
+    pub due_by: i64,
+    #[serde(rename = "has_evidence")]
+    pub has_evidence: bool,
+    #[serde(rename = "past_due")]
+    pub past_due: bool,
+    #[serde(rename = "submission_count")]
+    pub submission_count: i64,
 }

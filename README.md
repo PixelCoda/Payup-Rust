@@ -12,40 +12,56 @@ I built this library due to a lack of synchronous payment libraries. Currently i
     * Ability to fetch the account balance for your stripe account
 
 * BalanceTransaction:
-    * Ability to fetch an individual BalanceTransaction
+    * Ability to retrieve a BalanceTransaction
     * Ability to list all BalanceTransactions
 
 * Card:
     * Ability to attach a Card to a PaymentMethod
 
 * Charge:
-    * Ability to list/post/get/update Charge
+    * Ability to retrieve a Charge
+    * Ability to list all Charges
+    * Ability to update an existing Charge
+    * Ability to create a new Charge
     * Ability to capture a charge
 
 * Customer:
-    * Ability to list/post/get/update/destroy Customers
+    * Ability to retrieve a Customer
+    * Ability to list all Customers
+    * Ability to update an existing Customer
+    * Ability to create a new Customer
+    * Ability to destroy a Customer
     * Ability to attach payment methods to Customers
     * Ability to list a customers invoices
     * Ability to list a customers payment methods
 
+* Dispute:
+    * Ability to retrieve a Dispute
+    * Ability to list all Disputes
+    * Ability to close a Dispute
+    * Ability to update an existing Dispute
+
 * Invoice:
-    * Ability to get an invoice by the id
-    * Ability to list all invoices
+    * Ability to retrieve an Invoice
+    * Ability to list all Invoices
 
 * PaymentMethod:
-    * Ability to get an PaymentMethod by the id
-    * Ability to post a new PaymentMethod
+    * Ability to retrieve a PaymentMethod
+    * Ability to create a new PaymentMethod
 
-* Plan
-    * Ability to list/post/get/update/destroy Plans
+* Plan:
+    * Ability to retrieve a Plan
+    * Ability to list all Plan
+    * Ability to update an existing Plan
+    * Ability to create a new Plan
 
 * Price
-    * Ability to post a new Price
+    * Ability to create a new Price
 
 * Subscription
-    * Ability to post a new Subscription
-    * Ability to get a Subscription by the id
-    * Ability to post updates to an existing Subscription
+    * Ability to create a new Subscription
+    * Ability to retrieve a Subscription
+    * Ability to update an existing Subscription
     * Ability to cancel a subscription
 
 ## Roadmap:
@@ -58,7 +74,7 @@ I built this library due to a lack of synchronous payment libraries. Currently i
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.42"
+payup = "0.1.43"
 ```
 
 Example:

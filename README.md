@@ -2,11 +2,53 @@
 
 ## Description
 
-A synchronous + asynchronous payment library for processing payments with rust. Stripe is quasi-supported if you don't need the full api.
+A synchronous + asynchronous payment library for processing payments with rust + stripe. 
 
 I built this library due to a lack of synchronous payment libraries. Currently im only focused on features I need for another project. 
 
-Roadmap:
+## Current Stripe Features:
+
+* Balance:
+    * Ability to fetch the account balance for your stripe account
+
+* BalanceTransaction:
+    * Ability to fetch an individual BalanceTransaction
+    * Ability to list all BalanceTransactions
+
+* Card:
+    * Ability to attach a Card to a PaymentMethod
+
+* Charge:
+    * Ability to list/post/get/update Charge
+    * Ability to capture a charge
+
+* Customer:
+    * Ability to list/post/get/update/destroy Customers
+    * Ability to attach payment methods to Customers
+    * Ability to list a customers invoices
+    * Ability to list a customers payment methods
+
+* Invoice:
+    * Ability to get an invoice by the id
+    * Ability to list all invoices
+
+* PaymentMethod:
+    * Ability to get an PaymentMethod by the id
+    * Ability to post a new PaymentMethod
+
+* Plan
+    * Ability to list/post/get/update/destroy Plans
+
+* Price
+    * Ability to post a new Price
+
+* Subscription
+    * Ability to post a new Subscription
+    * Ability to get a Subscription by the id
+    * Ability to post updates to an existing Subscription
+    * Ability to cancel a subscription
+
+## Roadmap:
 * 0.1.0: Quasi-Stripe Support
 * 0.2.0: Full Stripe API Support
 * 0.3.0: Paypal Support

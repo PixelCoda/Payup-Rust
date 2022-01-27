@@ -1,6 +1,6 @@
 [package]
 name = "payup"
-description = "A synchronous + asynchronous payment library for processing payments with rust. Stripe is quasi-supported if you don't need the full api."
+description = "A synchronous + asynchronous payment library for processing payments with rust + stripe."
 version = "0.1.42"
 edition = "2018"
 authors = ["Caleb Mitchell Smith-Woolrich <calebsmithwoolrich@gmail.com>"]

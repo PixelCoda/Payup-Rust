@@ -814,9 +814,7 @@ pub struct Customer {
     pub tax_exempt: Option<String>,
 }
 impl Customer {
-
-
-   /// Returns an empty Customer object
+    /// Returns an empty Customer object
     ///
     /// # Examples
     ///
@@ -1394,8 +1392,236 @@ impl Customer {
     }
 }
 
+// TODO - Finish Implementation
+/// Invoices are statements of amounts owed by a customer.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Invoice {
+    pub id: Option<String>,
+    pub customer: Option<String>,
+    pub auto_advance:  Option<String>
+}
+impl Invoice {
+    // pub fn new() -> Self {
+    //     return Plan{
+    //         id: None, 
+    //         customer: None,
+    //         auto_advance: None
+    //     };
+    // }
+
+    // Status draft, open, paid, uncollectible, or void
+    pub fn list(creds: Auth, status: Option<String>) -> Result<crate::stripe::response::Invoices, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/invoices".to_string();
+
+        if status.is_some() {
+            url = format!("https://api.stripe.com/v1/invoices?status={}", status.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Invoice, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::Invoice>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
+    // pub fn post(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
+    //     let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/invoices")
+    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+    //     .form(&self.to_params())
+    //     .send();
+
+    //     match request{
+    //         Ok(req) => {
+    //             let mut plan = self.clone();
+    //             let json = req.json::<crate::stripe::response::Invoice>()?;
+    //             plan.id = Some(json.id);
+    //             Ok(plan)
+    //         },
+    //         Err(err) => Err(err)
+    //     }
+    // }
+    // pub async fn post_async(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
+    //     let request = reqwest::Client::new()
+    //     .post("https://api.stripe.com/v1/invoices")
+    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+    //     .form(&self.to_params())
+    //     .send().await;
+    //     match request{
+    //         Ok(req) => {
+    //             let mut invoice = self.clone();
+    //             let json = req.json::<crate::stripe::response::Invoice>().await?;
+    //             invoice.id = Some(json.id);
+    //             Ok(invoice)
+    //         },
+    //         Err(err) => Err(err)
+    //     }
+    // }
+    // fn to_params(&self) -> Vec<(&str, &str)> {
+    //     // return Customer{client, secret};
+    //     let mut params = vec![];
+    //     match &self.amount{
+    //         Some(amount) => params.push(("amount", amount.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.currency{
+    //         Some(currency) => params.push(("currency", currency.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.interval{
+    //         Some(interval) => params.push(("interval", interval.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.product{
+    //         Some(product) => params.push(("product", product.as_str())),
+    //         None => {}
+    //     }
+    //     match &self.active{
+    //         Some(active) => params.push(("active", active.as_str())),
+    //         None => {}
+    //     }
+    //     return params;
+    // }
+}
+
+
 
 // TODO - Finish Implementation
+/// PaymentMethod objects represent your customer's payment instruments.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PaymentMethod {
+    pub id: Option<String>,
+    pub method_type: Option<String>,
+    pub created: Option<String>,
+    pub customer: Option<String>,
+    pub livemode:  Option<bool>,
+    pub name: Option<String>,
+    pub phone: Option<String>,
+    pub billing_details: Option<crate::stripe::response::BillingDetails>,
+    pub card: Option<Card>,
+    pub type_field: Option<String>,
+}
+impl PaymentMethod {
+    pub fn new() -> Self {
+        return PaymentMethod{
+            id: None, 
+            method_type: None, 
+            created: None, 
+            customer: None, 
+            livemode: None, 
+            name: None,
+            phone: None,
+            billing_details: None, 
+            card: None,
+            type_field: None
+        };
+    }
+    pub fn attach(&self, customer: Customer, creds: Auth) ->  Result<bool, reqwest::Error>{
+
+        match &self.id{
+            Some(id) => {
+               
+                let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id.clone());
+
+                
+                let params = [
+                    ("customer", id.as_str())
+                ];
+                let request = reqwest::blocking::Client::new().post(url)
+                .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+                .form(&params)
+                .send()?;
+                return Ok(true);
+            
+                
+            },
+            None => return Ok(false)
+        }
+
+        return Ok(false);
+    }
+    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::PaymentMethod, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/payment_methods/{}", id.clone());
+        
+        let request = reqwest::blocking::Client::new().get(url)
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .send();
+        match request{
+            Ok(req) => {
+                let json = req.json::<crate::stripe::response::PaymentMethod>().unwrap();
+                return Ok(json);
+            },
+            Err(err) => Err(err)
+        }
+    }
+    pub fn post(&self, creds: Auth) ->  Result<PaymentMethod, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/payment_methods")
+        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+        .form(&self.to_params())
+        .send();
+
+        match request{
+            Ok(req) => {
+                let mut plan = self.clone();
+                let json = req.json::<crate::stripe::response::PaymentMethod>()?;
+                plan.id = Some(json.id);
+                Ok(plan)
+            },
+            Err(err) => Err(err)
+        }
+    }
+    fn to_params(&self) -> Vec<(&str, &str)> {
+        // return Customer{client, secret};
+        let mut params = vec![];
+        match &self.method_type{
+            Some(method_type) => params.push(("type", method_type.as_str())),
+            None => {}
+        }
+        match &self.card{
+            Some(card) => {
+                match &card.number{
+                    Some(number) => params.push(("card[number]", number.as_str())),
+                    None => {}
+                }
+                match &card.exp_month{
+                    Some(exp_month) => params.push(("card[exp_month]", exp_month.as_str())),
+                    None => {}
+                }
+                match &card.exp_year{
+                    Some(exp_year) => params.push(("card[exp_year]", exp_year.as_str())),
+                    None => {}
+                }
+                match &card.cvc{
+                    Some(cvc) => params.push(("card[cvc]", cvc.as_str())),
+                    None => {}
+                }
+            },
+            None => {}
+        }
+        return params;
+    }
+}
+
+
+// TODO - Finish Implementation
+/// Plans define the base price, currency, and billing cycle for recurring purchases of products. 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Plan {
     pub id: Option<String>,
@@ -1566,183 +1792,41 @@ impl Plan {
     }
 }
 
-// TODO - Finish Implementation
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Invoice {
-    pub id: Option<String>,
-    pub customer: Option<String>,
-    pub auto_advance:  Option<String>
-}
-impl Invoice {
-    // pub fn new() -> Self {
-    //     return Plan{
-    //         id: None, 
-    //         customer: None,
-    //         auto_advance: None
-    //     };
-    // }
-
-    // Status draft, open, paid, uncollectible, or void
-    pub fn list(creds: Auth, status: Option<String>) -> Result<crate::stripe::response::Invoices, reqwest::Error> {
-        let mut url = "https://api.stripe.com/v1/invoices".to_string();
-
-        if status.is_some() {
-            url = format!("https://api.stripe.com/v1/invoices?status={}", status.unwrap());
-        }
-
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Invoice, reqwest::Error> {
-        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
-        
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Invoice>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    // pub fn post(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
-    //     let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/invoices")
-    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-    //     .form(&self.to_params())
-    //     .send();
-
-    //     match request{
-    //         Ok(req) => {
-    //             let mut plan = self.clone();
-    //             let json = req.json::<crate::stripe::response::Invoice>()?;
-    //             plan.id = Some(json.id);
-    //             Ok(plan)
-    //         },
-    //         Err(err) => Err(err)
-    //     }
-    // }
-    // pub async fn post_async(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
-    //     let request = reqwest::Client::new()
-    //     .post("https://api.stripe.com/v1/invoices")
-    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-    //     .form(&self.to_params())
-    //     .send().await;
-    //     match request{
-    //         Ok(req) => {
-    //             let mut invoice = self.clone();
-    //             let json = req.json::<crate::stripe::response::Invoice>().await?;
-    //             invoice.id = Some(json.id);
-    //             Ok(invoice)
-    //         },
-    //         Err(err) => Err(err)
-    //     }
-    // }
-    // fn to_params(&self) -> Vec<(&str, &str)> {
-    //     // return Customer{client, secret};
-    //     let mut params = vec![];
-    //     match &self.amount{
-    //         Some(amount) => params.push(("amount", amount.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.currency{
-    //         Some(currency) => params.push(("currency", currency.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.interval{
-    //         Some(interval) => params.push(("interval", interval.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.product{
-    //         Some(product) => params.push(("product", product.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.active{
-    //         Some(active) => params.push(("active", active.as_str())),
-    //         None => {}
-    //     }
-    //     return params;
-    // }
-}
 
 // TODO - Finish Implementation
+/// Prices define the unit cost, currency, and (optional) billing cycle. 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PaymentMethod {
+pub struct Price {
     pub id: Option<String>,
-    pub method_type: Option<String>,
-    pub created: Option<String>,
-    pub customer: Option<String>,
-    pub livemode:  Option<bool>,
-    pub name: Option<String>,
-    pub phone: Option<String>,
-    pub billing_details: Option<crate::stripe::response::BillingDetails>,
-    pub card: Option<Card>,
+    pub active: Option<bool>,
+    pub billing_scheme: Option<String>,
+    pub created: Option<i64>,
+    pub currency: Option<String>,
+    pub livemode: Option<bool>,
+    pub product: Option<String>,
+    pub tax_behavior: Option<String>,
     pub type_field: Option<String>,
+    pub unit_amount: Option<String>,
+    pub unit_amount_decimal: Option<String>,
 }
-impl PaymentMethod {
+impl Price {
     pub fn new() -> Self {
-        return PaymentMethod{
-            id: None, 
-            method_type: None, 
-            created: None, 
-            customer: None, 
-            livemode: None, 
-            name: None,
-            phone: None,
-            billing_details: None, 
-            card: None,
-            type_field: None
+        return Price{
+            id: None,
+            active: None,
+            billing_scheme: None,
+            created: None,
+            currency: None,
+            livemode: None,
+            product: None,
+            tax_behavior: None,
+            type_field: None,
+            unit_amount: None,
+            unit_amount_decimal: None
         };
     }
-    pub fn attach(&self, customer: Customer, creds: Auth) ->  Result<bool, reqwest::Error>{
-
-        match &self.id{
-            Some(id) => {
-               
-                let url = format!("https://api.stripe.com/v1/payment_methods/{}/attach", id.clone());
-
-                
-                let params = [
-                    ("customer", id.as_str())
-                ];
-                let request = reqwest::blocking::Client::new().post(url)
-                .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-                .form(&params)
-                .send()?;
-                return Ok(true);
-            
-                
-            },
-            None => return Ok(false)
-        }
-
-        return Ok(false);
-    }
-    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::PaymentMethod, reqwest::Error> {
-        let mut url = format!("https://api.stripe.com/v1/payment_methods/{}", id.clone());
-        
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::PaymentMethod>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    pub fn post(&self, creds: Auth) ->  Result<PaymentMethod, reqwest::Error> {
-        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/payment_methods")
+    pub fn post(&self, creds: Auth) ->  Result<Price, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/prices")
         .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
         .form(&self.to_params())
         .send();
@@ -1750,7 +1834,7 @@ impl PaymentMethod {
         match request{
             Ok(req) => {
                 let mut plan = self.clone();
-                let json = req.json::<crate::stripe::response::PaymentMethod>()?;
+                let json = req.json::<crate::stripe::response::Price>()?;
                 plan.id = Some(json.id);
                 Ok(plan)
             },
@@ -1760,36 +1844,25 @@ impl PaymentMethod {
     fn to_params(&self) -> Vec<(&str, &str)> {
         // return Customer{client, secret};
         let mut params = vec![];
-        match &self.method_type{
-            Some(method_type) => params.push(("type", method_type.as_str())),
+        match &self.currency{
+            Some(currency) => params.push(("currency", currency.as_str())),
             None => {}
         }
-        match &self.card{
-            Some(card) => {
-                match &card.number{
-                    Some(number) => params.push(("card[number]", number.as_str())),
-                    None => {}
-                }
-                match &card.exp_month{
-                    Some(exp_month) => params.push(("card[exp_month]", exp_month.as_str())),
-                    None => {}
-                }
-                match &card.exp_year{
-                    Some(exp_year) => params.push(("card[exp_year]", exp_year.as_str())),
-                    None => {}
-                }
-                match &card.cvc{
-                    Some(cvc) => params.push(("card[cvc]", cvc.as_str())),
-                    None => {}
-                }
-            },
+        match &self.unit_amount{
+            Some(unit_amount) => params.push(("unit_amount", unit_amount.as_str())),
             None => {}
         }
+
+        // TODO Impliment product
+
         return params;
     }
+
+ 
 }
 
 // TODO - Finish Implementation
+/// Subscriptions allow you to charge a customer on a recurring basis.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Subscription {
     pub id: Option<String>,
@@ -1944,72 +2017,7 @@ impl Subscription {
  
 }
 
-// TODO - Finish Implementation
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Price {
-    pub id: Option<String>,
-    pub active: Option<bool>,
-    pub billing_scheme: Option<String>,
-    pub created: Option<i64>,
-    pub currency: Option<String>,
-    pub livemode: Option<bool>,
-    pub product: Option<String>,
-    pub tax_behavior: Option<String>,
-    pub type_field: Option<String>,
-    pub unit_amount: Option<String>,
-    pub unit_amount_decimal: Option<String>,
-}
-impl Price {
-    pub fn new() -> Self {
-        return Price{
-            id: None,
-            active: None,
-            billing_scheme: None,
-            created: None,
-            currency: None,
-            livemode: None,
-            product: None,
-            tax_behavior: None,
-            type_field: None,
-            unit_amount: None,
-            unit_amount_decimal: None
-        };
-    }
-    pub fn post(&self, creds: Auth) ->  Result<Price, reqwest::Error> {
-        let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/prices")
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .form(&self.to_params())
-        .send();
 
-        match request{
-            Ok(req) => {
-                let mut plan = self.clone();
-                let json = req.json::<crate::stripe::response::Price>()?;
-                plan.id = Some(json.id);
-                Ok(plan)
-            },
-            Err(err) => Err(err)
-        }
-    }
-    fn to_params(&self) -> Vec<(&str, &str)> {
-        // return Customer{client, secret};
-        let mut params = vec![];
-        match &self.currency{
-            Some(currency) => params.push(("currency", currency.as_str())),
-            None => {}
-        }
-        match &self.unit_amount{
-            Some(unit_amount) => params.push(("unit_amount", unit_amount.as_str())),
-            None => {}
-        }
-
-        // TODO Impliment product
-
-        return params;
-    }
-
- 
-}
 
 // =====================================================================================
 // All structs below this point are just used to support the implimented structs above
@@ -2129,6 +2137,7 @@ pub struct Refunds {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+#[doc(hidden)]
 pub struct Customers {
     pub object: String,
     pub url: String,

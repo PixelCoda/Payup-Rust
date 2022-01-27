@@ -8,19 +8,6 @@ I built this library due to a lack of synchronous payment libraries. Currently i
 
 Roadmap:
 * 0.1.0: Quasi-Stripe Support
-    * Ability to list/create Customers (DONE)
-    * Ability to list/create Plans (DONE)
-    * Ability to create PaymentMethods from a Card and attach to a Customer (DONE)
-    * Ability to list all PaymentMethods for customer.id (DONE)
-    * Ability to get Customer by id (DONE)
-    * Ability to get PaymentMethod by id (DONE)
-    * Ability to get Subscription by id (DONE)
-    * Ability to subscribe user to a plan (DONE)
-    * Ability to cancel a subscription to a plan (DONE)
-    * Ability to change default funding source for Subscription (DONE)
-    * Ability to list Invoices for Customer (DONE)
-    * Ability to list all Invoices (DONE)
-    * Ability to get invoice by id (DONE)
 * 0.2.0: Full Stripe API Support
 * 0.3.0: Paypal Support
 * 0.4.0: Cryptocurrency Support
@@ -29,7 +16,7 @@ Roadmap:
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.41"
+payup = "0.1.42"
 ```
 
 Example:
@@ -81,7 +68,7 @@ fn main() {
     cust.payment_method = None;
     
     // Post customer to stripe and update the local cust variable
-    cust = cust.post(auth.clone()).unwrap();
+    let cust = cust.post(auth.clone()).unwrap();
 
     let cust_id = cust.id.clone().unwrap();
 
@@ -102,19 +89,19 @@ fn main() {
 
 
     // Fetch customers from stripe account
-    let customers = payup::stripe::Customer::list_all(auth.clone());
+    let customers = payup::stripe::Customer::list(auth.clone()).unwrap();
     // println!("customers: {:?}", customers);
 
     // Create a new plan
-    let mut new_plan = payup::stripe::Plan::new();
-    new_plan.amount = Some("200".to_string());
-    new_plan.currency = Some("usd".to_string());
-    new_plan.interval = Some("month".to_string());
-    new_plan.product = Some("prod_KSywTYVmG9jVC4".to_string());
-    new_plan = new_plan.post(auth.clone()).unwrap();
+    let mut np = payup::stripe::Plan::new();
+    np.amount = Some("200".to_string());
+    np.currency = Some("usd".to_string());
+    np.interval = Some("month".to_string());
+    np.product = Some("prod_KSywTYVmG9jVC4".to_string());
+    let new_plan = np.post(auth.clone()).unwrap();
 
     // Fetch plans from stripe account
-    let plans = payup::stripe::Plan::list_all(auth.clone());
+    let plans = payup::stripe::Plan::list(auth.clone());
     // println!("plans: {:?}", plans);
 
     // Create a new card
@@ -175,22 +162,13 @@ fn main() {
 
 
 
-                let get_payment_methods = payup::stripe::Customer::payment_methods(cust_id.clone(), format!("card"), auth.clone());
-                match get_payment_methods {
-                    Ok(sub) => {
-                        println!("PAYMENT_METHODS_GET: {:?}", sub);
-                    },
-                    Err(err) => println!("{}", err),
-                }
+                let get_payment_methods = payup::stripe::Customer::payment_methods(auth.clone(), cust_id.clone(), format!("card"));
+         
     
 
-                let get_invoices = payup::stripe::Customer::invoices(cust_id.clone(), auth.clone());
-                match get_invoices {
-                    Ok(sub) => {
-                        println!("INVOICES: {:?}", sub);
-                    },
-                    Err(err) => println!("{}", err),
-                }
+                let get_invoices = payup::stripe::Customer::invoices(auth.clone(), cust_id.clone());
+                println!("CUSTOMER_INVOICES: {:?}", get_invoices);
+           
 
                 // Create a new card
                 let mut new_card = payup::stripe::Card::new();
@@ -230,6 +208,7 @@ fn main() {
 
 
 }
+
 
 ```
 ## License

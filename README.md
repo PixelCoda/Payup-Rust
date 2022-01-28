@@ -41,6 +41,24 @@ I built this library due to a lack of synchronous payment libraries. Currently i
     * Ability to close a Dispute
     * Ability to update an existing Dispute
 
+* Event:
+    * Ability to retrieve an Event
+    * Ability to list all Events
+
+* Files:
+    * Ability to retrieve a File
+    * Ability to list all Files
+    * Ability to create a File
+
+* FileLink:
+    * Ability to retrieve a FileLink
+    * Ability to list all FileLinks
+    * Ability to create a FileLink
+    * Ability to update an existing FileLink
+
+* Mandate:
+    * Ability to retrieve a Mandate
+
 * Invoice:
     * Ability to retrieve an Invoice
     * Ability to list all Invoices

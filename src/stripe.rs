@@ -1918,6 +1918,822 @@ impl Dispute {
 
 }
 
+// TODO - Impliment data/object. This can be any stripe object so it's best to build out the other structs before implementing.
+/// Events occur when the state of another API resource changes.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Event {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    #[serde(rename = "api_version")]
+    pub api_version: Option<String>,
+    pub created: Option<i64>,
+    // pub data: Option<Data>,
+    pub livemode: Option<bool>,
+    #[serde(rename = "pending_webhooks")]
+    pub pending_webhooks: Option<i64>,
+    pub request: Option<Request>,
+    #[serde(rename = "type")]
+    pub type_field: Option<String>,
+}
+impl Event {
+
+
+    /// Asynchronously retrieves the event with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the event you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let event = payup::stripe::Event::async_get(auth, "ch_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/events/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously returns all stripe Events.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let events = payup::stripe::Event::async_list(auth).await?;
+    /// ```
+    pub async fn async_list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+
+    /// Retrieves the event with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the event you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let event = payup::stripe::Event::get(auth, "ch_")?;
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/events/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Returns all stripe events.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let events = payup::stripe::Event::list(auth)?;
+    /// ```
+    pub fn list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after)?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>) -> Result<Events, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/events".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/events?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<Events>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>) -> Result<Events, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/events".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/events?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+
+        let json = request.json::<Events>().await?;
+        return Ok(json);
+    }
+
+}
+
+/// Represents a file hosted on Stripe's servers. 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct File {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    pub created: Option<i64>,
+    #[serde(rename = "expires_at")]
+    pub expires_at: Option<i64>,
+    pub filename: Option<String>,
+    pub links: Option<Links>,
+    pub purpose: Option<String>,
+    pub size: Option<i64>,
+    pub title: Option<String>,
+    #[serde(rename = "type")]
+    pub type_field: Option<String>,
+    pub url: Option<String>,
+    pub file: Option<Vec<u8>>,
+}
+impl File {
+
+    /// Returns an empty File object
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut file = payup::stripe::File::new();
+    /// file.title = Some(format!("Title"));
+    /// ```
+    pub fn new() -> Self {
+        return File{
+            id: None,
+            object: None,
+            created: None,
+            expires_at: None,
+            filename: None,
+            links: None,
+            purpose: None,
+            size: None,
+            title: None,
+            type_field: None,
+            url: None,
+            file: None,
+        };
+    }
+
+
+    /// Asynchronously retrieves a file with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the file you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let file = payup::stripe::File::async_get(auth, "ch_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/files/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously returns all stripe Files.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let disputes = payup::stripe::Dispute::async_list(auth).await?;
+    /// ```
+    pub async fn async_list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// Asynchronously POSTs a new File to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file = payup::stripe::File::new();
+    /// ley bytes: Vec<u8> = Vec::new();
+    /// charge.amount = Some(100);
+    /// file.file = Some(bytes);
+    ///
+    /// // The purpose of the uploaded file.
+    /// // Possible enum values: account_requirement, additional_verification, business_icon, business_logo, customer_signature, dispute_evidence, identity_document, pci_document, tax_document_user_upload
+    /// file.purpose = Some(format!("cust_"));
+    ///
+    /// file = file.post(auth.clone()).await?;
+    /// ```
+    pub async fn async_post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+
+        let mut form = self.to_multipart_form_async().await;
+
+        let request = reqwest::Client::new()
+            .post("https://api.stripe.com/v1/files")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .multipart(form)
+            .send().await?;
+
+
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// POSTs a new File to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file = payup::stripe::File::new();
+    /// ley bytes: Vec<u8> = Vec::new();
+    /// charge.amount = Some(100);
+    /// file.file = Some(bytes);
+    ///
+    /// // The purpose of the uploaded file.
+    /// // Possible enum values: account_requirement, additional_verification, business_icon, business_logo, customer_signature, dispute_evidence, identity_document, pci_document, tax_document_user_upload
+    /// file.purpose = Some(format!("cust_"));
+    ///
+    /// file = file.post(auth.clone())?;
+    /// ```
+    pub fn post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+
+        let mut form = self.to_multipart_form();
+
+        let request = reqwest::blocking::Client::new()
+            .post("https://api.stripe.com/v1/files")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .multipart(form)
+            .send()?;
+
+
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Retrieves the dispute with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the dispute you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let dispute = payup::stripe::Dispute::get(auth, "ch_")?;
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/files/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Returns all stripe disputes.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let charges = payup::stripe::Dispute::list(auth)?;
+    /// ```
+    pub fn list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after)?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>) -> Result<Files, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/files".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/files?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<Files>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>) -> Result<Files, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/files".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/files?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+
+        let json = request.json::<Files>().await?;
+        return Ok(json);
+    }
+
+    fn to_multipart_form(&self) -> reqwest::blocking::multipart::Form {
+        let mut form = reqwest::blocking::multipart::Form::new();
+
+        match &self.purpose{
+            Some(purpose) => {
+                form = form.text("purpose", purpose.clone());
+            },
+            None => {
+         
+            }
+        }
+
+        match &self.file{
+            Some(file) => {
+                let part = reqwest::blocking::multipart::Part::bytes(file.clone());
+                form = form.part("file", part);
+             
+            },
+            None => {
+             
+            }
+        }
+
+        return form;    
+    }
+
+    async fn to_multipart_form_async(&self) -> reqwest::multipart::Form {
+        let mut form = reqwest::multipart::Form::new();
+
+        match &self.purpose{
+            Some(purpose) => {
+                form = form.text("purpose", purpose.clone());
+            },
+            None => {
+         
+            }
+        }
+
+        match &self.file{
+            Some(file) => {
+                let part = reqwest::multipart::Part::bytes(file.clone());
+                form = form.part("file", part);
+             
+            },
+            None => {
+             
+            }
+        }
+
+        return form;    
+    }
+
+}
+
+
+/// To share the contents of a File object with non-Stripe users, you can create a FileLink
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct FileLink {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    pub created: Option<i64>,
+    pub expired: Option<bool>,
+    #[serde(rename = "expires_at")]
+    pub expires_at: Option<i64>,
+    pub link_expires_at: Option<String>,
+    pub file: Option<String>,
+    pub livemode: Option<bool>,
+    // pub metadata: Metadata,
+    pub url: Option<String>
+}
+impl FileLink {
+
+    /// Returns an empty FileLink object
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut file_link = payup::stripe::FileLink::new();
+    /// file_link.file = Some(format!("file_"));
+    /// ```
+    pub fn new() -> Self {
+        return FileLink {
+            id: None,
+            object: None,
+            created: None,
+            expired: None,
+            expires_at: None,
+            link_expires_at: None,
+            file: None,
+            livemode: None,
+            url: None
+        };
+    }
+
+
+    /// Asynchronously retrieves a file link with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the file you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let file = payup::stripe::FileLink::async_get(auth, "link_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/file_links/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously returns all stripe FileLinks.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let file_links = payup::stripe::FileLink::async_list(auth).await?;
+    /// ```
+    pub async fn async_list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// Asynchronously POSTs a new FileLink to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file_link = payup::stripe::FileLink::new();
+    /// file_link.file = Some(format!("file_"));
+    /// file_link.link_expires_at = Some(format!("1643341848"));
+    ///
+    /// file_link = file_link.async_post(auth.clone()).await?;
+    /// ```
+    pub async fn async_post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new()
+            .post("https://api.stripe.com/v1/file_links")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously POSTs an update to an existing FileLink
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file_link = payup::stripe::FileLink::new();
+    /// file_link.file = Some(format!("file_"));
+    ///
+    /// file_link = file_link.async_post(auth.clone()).await?;
+    ///
+    /// file_link.link_expires_at = Some(format!("1643341848"));
+    /// file_link = file_link.async_update(auth.clone()).await?;
+    /// ```
+    pub async fn async_update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new().post(format!("https://api.stripe.com/v1/file_links/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Retrieves a file link with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the FileLink you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let file_link = payup::stripe::FileLink::get(auth, "ch_");
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/file_links/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Eeturns all stripe FileLinks.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let file_links = payup::stripe::FileLink::list(auth)?;
+    /// ```
+    pub fn list(creds: Auth) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after)?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// POSTs a new FileLink to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file_link = payup::stripe::FileLink::new();
+    /// file_link.file = Some(format!("file_"));
+    /// file_link.link_expires_at = Some(format!("1643341848"));
+    ///
+    /// file_link = file_link.async_post(auth.clone())?;
+    /// ```
+    pub fn post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new()
+            .post("https://api.stripe.com/v1/file_links")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// POSTs an update to an existing FileLink
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut file_link = payup::stripe::FileLink::new();
+    /// file_link.file = Some(format!("file_"));
+    ///
+    /// file_link = file_link.post(auth.clone())?;
+    ///
+    /// file_link.link_expires_at = Some(format!("1643341848"));
+    /// file_link = file_link.update(auth.clone())?;
+    /// ```
+    pub fn update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post(format!("https://api.stripe.com/v1/file_links/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>) -> Result<FileLinks, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/file_links".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/file_links?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<FileLinks>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>) -> Result<FileLinks, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/file_links".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/file_links?starting_after={}", starting_after.unwrap());
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+
+        let json = request.json::<FileLinks>().await?;
+        return Ok(json);
+    }
+
+    fn to_params(&self) -> Vec<(&str, &str)> {
+        let mut params = vec![];
+        match &self.file{
+            Some(file) => params.push(("file", file.as_str())),
+            None => {}
+        }
+        match &self.link_expires_at{
+            Some(link_expires_at) => params.push(("expires_at", link_expires_at.as_str())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
+/// A Mandate is a record of the permission a customer has given you to debit their payment method.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Mandate {
+    pub id: String,
+    pub object: String,
+    #[serde(rename = "customer_acceptance")]
+    pub customer_acceptance: CustomerAcceptance,
+    pub livemode: bool,
+    // #[serde(rename = "multi_use")]
+    // pub multi_use: MultiUse,
+    #[serde(rename = "payment_method")]
+    pub payment_method: String,
+    #[serde(rename = "payment_method_details")]
+    pub payment_method_details: PaymentMethodDetails,
+    pub status: String,
+    #[serde(rename = "type")]
+    pub type_field: String,
+}
+impl Mandate {
+    /// Asynchronously retrieves a Mandate with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the Mandate you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let file = payup::stripe::Mandate::async_get(auth, "mandate_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/file_links/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+
+    /// Retrieves a Mandate with the given ID.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the Mandate you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let mandate = payup::stripe::Mandate::get(auth, "mandate_")?;
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/file_links/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+}
 
 // TODO - Finish Implementation
 /// Invoices are statements of amounts owed by a customer.
@@ -2628,9 +3444,11 @@ pub struct Charges {
 #[serde(rename_all = "camelCase")]
 #[doc(hidden)]
 pub struct PaymentMethodDetails {
-    pub card: Card,
+    #[serde(rename = "sepa_debit")]
+    pub sepa_debit: Option<SepaDebit>,
+    pub card: Option<Card>,
     #[serde(rename = "type")]
-    pub type_field: String,
+    pub type_field: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -2800,4 +3618,93 @@ pub struct EvidenceDetails {
     pub past_due: bool,
     #[serde(rename = "submission_count")]
     pub submission_count: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Events {
+    pub object: String,
+    pub data: Vec<Event>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Request {
+    pub id: String,
+    #[serde(rename = "idempotency_key")]
+    pub idempotency_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Files {
+    pub object: String,
+    pub url: String,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub data: Vec<File>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Links {
+    pub object: String,
+    // pub data: Vec<Value>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct FileLinks {
+    pub object: String,
+    pub url: String,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub data: Vec<FileLink>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct CustomerAcceptance {
+    #[serde(rename = "accepted_at")]
+    pub accepted_at: i64,
+    pub online: Online,
+    #[serde(rename = "type")]
+    pub type_field: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Online {
+    #[serde(rename = "ip_address")]
+    pub ip_address: String,
+    #[serde(rename = "user_agent")]
+    pub user_agent: String,
+}
+
+// #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+// #[serde(rename_all = "camelCase")]
+// pub struct MultiUse {
+// }
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct SepaDebit {
+    pub reference: String,
+    pub url: String,
 }

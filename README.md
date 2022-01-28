@@ -120,7 +120,7 @@ fn main() {
     }
 
 
-    let get_all_invoices = payup::stripe::Invoice::list(auth.clone(), None);
+    let get_all_invoices = payup::stripe::Invoice::list(auth.clone(), None, None);
     match get_all_invoices {
         Ok(sub) => {
             println!("ALL_INVOICES: {:?}", sub);
@@ -219,12 +219,15 @@ fn main() {
             if is_attached {
                 println!("Payment Method ({}) is now attached to Customer ({})", payment_method_id.clone(), cust_id.clone());
             
-            
+
+                let mut price_items: Vec<String> = Vec::new();
+                price_items.push(format!("price_1Jp6siGrEH09RU9u95Xp7soZ"));
+
                 // Subscript the customer to the new_plan.id....
                 let mut subscription = payup::stripe::Subscription::new();
                 subscription.customer = Some(cust_id.clone());
-                subscription.default_payment_method = payment_method.id.clone();
-                subscription.price_items.push(format!("price_1Jp6siGrEH09RU9u95Xp7soZ"));
+                subscription.default_payment_method = Some(payment_method_id.clone());
+                subscription.price_items = Some(price_items);
                 subscription = subscription.post(auth.clone()).unwrap();
             
                 println!("subscription: {:?}", subscription.clone());
@@ -286,7 +289,6 @@ fn main() {
 
 
 }
-
 
 ```
 ## License

@@ -56,12 +56,14 @@ I built this library due to a lack of synchronous payment libraries. Currently i
     * Ability to create a FileLink
     * Ability to update an existing FileLink
 
-* Mandate:
-    * Ability to retrieve a Mandate
-
 * Invoice:
     * Ability to retrieve an Invoice
     * Ability to list all Invoices
+    * Ability to create an Invoice
+    * Ability to update an existing Invoice
+
+* Mandate:
+    * Ability to retrieve a Mandate
 
 * PaymentMethod:
     * Ability to retrieve a PaymentMethod
@@ -92,7 +94,7 @@ I built this library due to a lack of synchronous payment libraries. Currently i
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.43"
+payup = "0.1.44"
 ```
 
 Example:

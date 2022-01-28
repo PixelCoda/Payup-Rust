@@ -2668,6 +2668,490 @@ impl FileLink {
 
 }
 
+// TODO - Finish Implementation
+/// Invoices are statements of amounts owed by a customer.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Invoice {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    #[serde(rename = "account_country")]
+    pub account_country: Option<String>,
+    #[serde(rename = "account_name")]
+    pub account_name: Option<String>,
+    #[serde(rename = "account_tax_ids")]
+    pub account_tax_ids: Option<String>,
+    #[serde(rename = "amount_due")]
+    pub amount_due: Option<i64>,
+    #[serde(rename = "amount_paid")]
+    pub amount_paid: Option<i64>,
+    #[serde(rename = "amount_remaining")]
+    pub amount_remaining: Option<i64>,
+    #[serde(rename = "application_fee_amount")]
+    pub application_fee_amount: Option<i64>,
+    #[serde(rename = "attempt_count")]
+    pub attempt_count: Option<i64>,
+    pub attempted: Option<bool>,
+    #[serde(rename = "auto_advance")]
+    pub auto_advance: Option<bool>,
+    // #[serde(rename = "automatic_tax")]
+    // pub automatic_tax: Option<AutomaticTax>,
+    #[serde(rename = "billing_reason")]
+    pub billing_reason: Option<String>,
+    // pub charge: Value,
+    #[serde(rename = "collection_method")]
+    pub collection_method: Option<String>,
+    pub created: Option<i64>,
+    pub currency: Option<String>,
+    // #[serde(rename = "custom_fields")]
+    // pub custom_fields: Value,
+    pub customer: Option<String>,
+    #[serde(rename = "customer_address")]
+    pub customer_address: Option<String>,
+    #[serde(rename = "customer_email")]
+    pub customer_email: Option<String>,
+    #[serde(rename = "customer_name")]
+    pub customer_name: Option<String>,
+    #[serde(rename = "customer_phone")]
+    pub customer_phone: Option<String>,
+    #[serde(rename = "customer_shipping")]
+    pub customer_shipping: Option<String>,
+    #[serde(rename = "customer_tax_exempt")]
+    pub customer_tax_exempt: Option<String>,
+    #[serde(rename = "customer_tax_ids")]
+    pub customer_tax_ids: Option<Vec<String>>,
+    #[serde(rename = "default_payment_method")]
+    pub default_payment_method: Option<String>,
+    #[serde(rename = "default_source")]
+    pub default_source: Option<String>,
+    // #[serde(rename = "default_tax_rates")]
+    // pub default_tax_rates: Option<Vec<String>>,
+    pub description: Option<String>,
+    // pub discount: Value,
+    // pub discounts: Vec<Value>,
+    // #[serde(rename = "due_date")]
+    // pub due_date: Value,
+    // #[serde(rename = "ending_balance")]
+    // pub ending_balance: Value,
+    // pub footer: Value,
+    #[serde(rename = "hosted_invoice_url")]
+    pub hosted_invoice_url: Option<String>,
+    #[serde(rename = "invoice_pdf")]
+    pub invoice_pdf: Option<String>,
+    // #[serde(rename = "last_finalization_error")]
+    // pub last_finalization_error: Value,
+    pub lines: Option<InvoiceLines>,
+    pub livemode: Option<bool>,
+    // pub metadata: Metadata3,
+    #[serde(rename = "next_payment_attempt")]
+    pub next_payment_attempt: Option<i64>,
+    // pub number: Value,
+    // #[serde(rename = "on_behalf_of")]
+    // pub on_behalf_of: Value,
+    pub paid: Option<bool>,
+    #[serde(rename = "paid_out_of_band")]
+    pub paid_out_of_band: Option<bool>,
+    // #[serde(rename = "payment_intent")]
+    // pub payment_intent: Value,
+    #[serde(rename = "payment_settings")]
+    pub payment_settings: Option<PaymentSettings>,
+    #[serde(rename = "period_end")]
+    pub period_end: Option<i64>,
+    #[serde(rename = "period_start")]
+    pub period_start: Option<i64>,
+    #[serde(rename = "post_payment_credit_notes_amount")]
+    pub post_payment_credit_notes_amount: Option<i64>,
+    #[serde(rename = "pre_payment_credit_notes_amount")]
+    pub pre_payment_credit_notes_amount: Option<i64>,
+    // pub quote: Value,
+    // #[serde(rename = "receipt_number")]
+    // pub receipt_number: Value,
+    #[serde(rename = "starting_balance")]
+    pub starting_balance: Option<i64>,
+    // #[serde(rename = "statement_descriptor")]
+    // pub statement_descriptor: Value,
+    pub status: Option<String>,
+    #[serde(rename = "status_transitions")]
+    pub status_transitions: Option<StatusTransitions>,
+    // pub subscription: Value,
+    pub subtotal: Option<i64>,
+    pub subscription: Option<String>,
+    
+    // pub tax: Value,
+    pub total: Option<i64>,
+    // #[serde(rename = "total_discount_amounts")]
+    // pub total_discount_amounts: Vec<Value>,
+    // #[serde(rename = "total_tax_amounts")]
+    // pub total_tax_amounts: Vec<Value>,
+    // #[serde(rename = "transfer_data")]
+    // pub transfer_data: Value,
+    // #[serde(rename = "webhooks_delivered_at")]
+    // pub webhooks_delivered_at: Value,
+}
+impl Invoice {
+
+    /// Returns an empty Invoice object
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut invoice = payup::stripe::Invoice::new();
+    /// invoice.customer = Some(format!("cust_"));
+    /// invoice.collection_method = Some(format!("charge_automatically"));
+    /// invoice.auto_advance = Some(true);
+    /// ```
+    pub fn new() -> Self {
+        return Invoice{
+            id: None,
+            object: None,
+            account_country: None,
+            account_name: None,
+            account_tax_ids: None,
+            amount_due: None,
+            amount_paid: None,
+            amount_remaining: None,
+            application_fee_amount: None,
+            attempt_count: None,
+            attempted: None,
+            auto_advance: None,
+            billing_reason: None,
+            collection_method: None,
+            created: None,
+            currency: None,
+            customer: None,
+            customer_address: None,
+            customer_email: None,
+            customer_name: None,
+            customer_phone: None,
+            customer_shipping: None,
+            customer_tax_exempt: None,
+            customer_tax_ids: None,
+            default_payment_method: None,
+            default_source: None,
+            description: None,
+            hosted_invoice_url: None,
+            invoice_pdf: None,
+            lines: None,
+            livemode: None,
+            next_payment_attempt: None,
+            paid: None,
+            paid_out_of_band: None,
+            payment_settings: None,
+            period_end: None,
+            period_start: None,
+            post_payment_credit_notes_amount: None,
+            pre_payment_credit_notes_amount: None,
+            subscription: None,
+            status: None,
+            starting_balance: None,
+            status_transitions: None,
+            subtotal: None,
+            total: None
+        };
+    }
+
+    /// Asynchronously retrieves the Invoice by the id.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the invoice you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let invoice = payup::stripe::Invoice::async_get(auth, "in_").await?;
+    /// ```
+    pub async fn async_get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously returns all stripe Invoices.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `status` - Ex: draft, open, paid, uncollectible, void (optional)
+    /// * `customer` - Limit to invoices belonging to a Customer's id (optional)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let invoices = payup::stripe::Invoice::async_list(auth).await?;
+    /// ```
+    pub async fn async_list(creds: Auth, status: Option<String>, customer: Option<String>) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk_async(creds.clone(), starting_after, status.clone(), customer.clone()).await?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// Asynchronously POSTs a new Invoice to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut invoice = payup::stripe::Invoice::new();
+    /// invoice.customer = Some(format!("cust_"));
+    /// invoice.collection_method = Some(format!("charge_automatically"));
+    /// invoice.auto_advance = Some(true);
+    /// invoice = invoice.async_post(auth).await?;
+    /// ```
+    pub async fn async_post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new()
+            .post("https://api.stripe.com/v1/invoices")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Asynchronously POSTs an update to an existing Invoice
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut invoice = payup::stripe::Invoice::new();
+    /// invoice.customer = Some(format!("cust_"));
+    /// invoice.collection_method = Some(format!("charge_automatically"));
+    /// invoice.auto_advance = Some(false);
+    /// invoice = invoice.async_post(auth).await?;
+    ///
+    /// invoice.auto_advance = Some(true);
+    /// invoice = invoice.async_update(auth).await?;
+    /// ```
+    pub async fn async_update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::Client::new().post(format!("https://api.stripe.com/v1/invoices/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send().await?;
+
+        let json = request.json::<Self>().await?;
+        return Ok(json);
+    }
+
+    /// Retrieves the details of an Invoice by the id.
+    /// 
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `id` - The id of the invoice you want to retrieve.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch customer using id
+    /// let invoice = payup::stripe::Invoice::get(auth, "in_");
+    /// ```
+    pub fn get(creds: Auth, id: String) -> Result<Self, reqwest::Error> {
+        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// Returns all stripe invoices.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - payup::stripe::Auth::new(client, secret)
+    /// * `status` - Ex: draft, open, paid, uncollectible, void (optional)
+    /// * `customer` - Limit to invoices belonging to a Customer's id (optional)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// // Fetch all customers from stripe
+    /// let invoices = payup::stripe::Invoice::list(auth)?;
+    /// ```
+    pub fn list(creds: Auth, status: Option<String>, customer: Option<String>) -> Result<Vec<Self>, reqwest::Error>{
+        let mut objects: Vec<Self> = Vec::new();
+
+        let mut has_more = true;
+        let mut starting_after: Option<String> = None;
+        while has_more{
+            let json = Self::list_chunk(creds.clone(), starting_after, status.clone(), customer.clone())?;
+            for json_object in json.data{
+                objects.push(json_object);
+            }
+            has_more = json.has_more;
+            starting_after = Some(objects[objects.len() - 1].id.clone().unwrap());
+        }
+        return Ok(objects);
+    }
+
+    /// POSTs a new Invoice to the stripe api
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut invoice = payup::stripe::Invoice::new();
+    /// invoice.customer = Some(format!("cust_"));
+    /// invoice.collection_method = Some(format!("charge_automatically"));
+    /// invoice.auto_advance = Some(true);
+    /// invoice = invoice.post(auth)?;
+    /// ```
+    pub fn post(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new()
+            .post("https://api.stripe.com/v1/invoices")
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    /// POSTs an update to an existing Charge
+    /// # Examples
+    ///
+    /// ```
+    /// // Create the Authentication refererence
+    /// let auth = payup::stripe::Auth::new(client, secret);
+    ///
+    /// let mut invoice = payup::stripe::Invoice::new();
+    /// invoice.customer = Some(format!("cust_"));
+    /// invoice.collection_method = Some(format!("charge_automatically"));
+    /// invoice.auto_advance = Some(false);
+    /// invoice = invoice.post(auth)?;
+    ///
+    /// invoice.auto_advance = Some(true);
+    /// invoice = invoice.update(auth)?;
+    /// ```
+    pub fn update(&self, creds: Auth) ->  Result<Self, reqwest::Error> {
+        let request = reqwest::blocking::Client::new().post(format!("https://api.stripe.com/v1/invoices/{}", self.clone().id.unwrap()))
+            .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
+            .form(&self.to_params())
+            .send()?;
+
+        let json = request.json::<Self>()?;
+        return Ok(json);
+    }
+
+    fn list_chunk(creds: Auth, starting_after: Option<String>, status: Option<String>, customer: Option<String>) -> Result<Invoices, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/invoices".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/invoices?starting_after={}", starting_after.unwrap());
+        }
+
+        if status.is_some(){
+            if url.contains("?"){
+                url = format!("{}{}={}", url, "&status", status.unwrap());
+            } else {
+                url = format!("{}{}={}", url, "?status", status.unwrap());
+            }
+        }
+
+        if customer.is_some(){
+            if url.contains("?"){
+                url = format!("{}{}={}", url, "&customer", customer.unwrap());
+            } else {
+                url = format!("{}{}={}", url, "?customer", customer.unwrap());
+            }
+        }
+
+        let request = reqwest::blocking::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send()?;
+
+        let json = request.json::<Invoices>()?;
+        return Ok(json);
+    }
+
+    async fn list_chunk_async(creds: Auth, starting_after: Option<String>, status: Option<String>, customer: Option<String>) -> Result<Invoices, reqwest::Error> {
+        let mut url = "https://api.stripe.com/v1/invoices".to_string();
+
+        if starting_after.is_some() {
+            url = format!("https://api.stripe.com/v1/invoices?starting_after={}", starting_after.unwrap());
+        }
+
+        if status.is_some(){
+            if url.contains("?"){
+                url = format!("{}{}={}", url, "&status", status.unwrap());
+            } else {
+                url = format!("{}{}={}", url, "?status", status.unwrap());
+            }
+        }
+
+        if customer.is_some(){
+            if url.contains("?"){
+                url = format!("{}{}={}", url, "&customer", customer.unwrap());
+            } else {
+                url = format!("{}{}={}", url, "?customer", customer.unwrap());
+            }
+        }
+
+        let request = reqwest::Client::new().get(url).basic_auth(creds.client.as_str(), Some(creds.secret.as_str())).send().await?;
+
+        let json = request.json::<Invoices>().await?;
+        return Ok(json);
+    }
+
+    fn to_params(&self) -> Vec<(&str, &str)> {
+        let mut params = vec![];
+        match &self.customer{
+            Some(customer) => params.push(("customer", customer.as_str())),
+            None => {}
+        }
+        // match &self.auto_advance{
+        //     Some(auto_advance) => params.push(("auto_advance", auto_advance.as_str())),
+        //     None => {}
+        // }
+        match &self.collection_method{
+            Some(collection_method) => params.push(("collection_method", collection_method.as_str())),
+            None => {}
+        }
+        match &self.description{
+            Some(description) => params.push(("description", description.as_str())),
+            None => {}
+        }
+        // match &self.metadata{
+        //     Some(metadata) => params.push(("metadata", metadata.as_str())),
+        //     None => {}
+        // }
+
+        match &self.subscription{
+            Some(subscription) => params.push(("subscription", subscription.as_str())),
+            None => {}
+        }
+
+        return params;
+    }
+
+}
+
 /// A Mandate is a record of the permission a customer has given you to debit their payment method.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mandate {
@@ -2735,114 +3219,7 @@ impl Mandate {
     }
 }
 
-// TODO - Finish Implementation
-/// Invoices are statements of amounts owed by a customer.
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Invoice {
-    pub id: Option<String>,
-    pub customer: Option<String>,
-    pub auto_advance:  Option<String>
-}
-impl Invoice {
-    // pub fn new() -> Self {
-    //     return Plan{
-    //         id: None, 
-    //         customer: None,
-    //         auto_advance: None
-    //     };
-    // }
 
-    // Status draft, open, paid, uncollectible, or void
-    pub fn list(creds: Auth, status: Option<String>) -> Result<crate::stripe::response::Invoices, reqwest::Error> {
-        let mut url = "https://api.stripe.com/v1/invoices".to_string();
-
-        if status.is_some() {
-            url = format!("https://api.stripe.com/v1/invoices?status={}", status.unwrap());
-        }
-
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Invoices>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    pub fn get(creds: Auth, id: String) -> Result<crate::stripe::response::Invoice, reqwest::Error> {
-        let mut url = format!("https://api.stripe.com/v1/invoices/{}", id.clone());
-        
-        let request = reqwest::blocking::Client::new().get(url)
-        .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-        .send();
-        match request{
-            Ok(req) => {
-                let json = req.json::<crate::stripe::response::Invoice>().unwrap();
-                return Ok(json);
-            },
-            Err(err) => Err(err)
-        }
-    }
-    // pub fn post(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
-    //     let request = reqwest::blocking::Client::new().post("https://api.stripe.com/v1/invoices")
-    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-    //     .form(&self.to_params())
-    //     .send();
-
-    //     match request{
-    //         Ok(req) => {
-    //             let mut plan = self.clone();
-    //             let json = req.json::<crate::stripe::response::Invoice>()?;
-    //             plan.id = Some(json.id);
-    //             Ok(plan)
-    //         },
-    //         Err(err) => Err(err)
-    //     }
-    // }
-    // pub async fn post_async(&self, creds: Auth) ->  Result<Invoice, reqwest::Error> {
-    //     let request = reqwest::Client::new()
-    //     .post("https://api.stripe.com/v1/invoices")
-    //     .basic_auth(creds.client.as_str(), Some(creds.secret.as_str()))
-    //     .form(&self.to_params())
-    //     .send().await;
-    //     match request{
-    //         Ok(req) => {
-    //             let mut invoice = self.clone();
-    //             let json = req.json::<crate::stripe::response::Invoice>().await?;
-    //             invoice.id = Some(json.id);
-    //             Ok(invoice)
-    //         },
-    //         Err(err) => Err(err)
-    //     }
-    // }
-    // fn to_params(&self) -> Vec<(&str, &str)> {
-    //     // return Customer{client, secret};
-    //     let mut params = vec![];
-    //     match &self.amount{
-    //         Some(amount) => params.push(("amount", amount.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.currency{
-    //         Some(currency) => params.push(("currency", currency.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.interval{
-    //         Some(interval) => params.push(("interval", interval.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.product{
-    //         Some(product) => params.push(("product", product.as_str())),
-    //         None => {}
-    //     }
-    //     match &self.active{
-    //         Some(active) => params.push(("active", active.as_str())),
-    //         None => {}
-    //     }
-    //     return params;
-    // }
-}
 
 
 
@@ -3673,6 +4050,17 @@ pub struct FileLinks {
     pub data: Vec<FileLink>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Invoices {
+    pub object: String,
+    pub url: String,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub data: Vec<Invoice>,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -3707,4 +4095,109 @@ pub struct Online {
 pub struct SepaDebit {
     pub reference: String,
     pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct InvoiceLines {
+    pub object: String,
+    pub data: Vec<InvoiceLine>,
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+    pub url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct InvoiceLine {
+    pub id: Option<String>,
+    pub object: Option<String>,
+    pub amount: Option<i64>,
+    pub currency: Option<String>,
+    pub description: Option<String>,
+    // #[serde(rename = "discount_amounts")]
+    // pub discount_amounts: Vec<Value>,
+    pub discountable: Option<bool>,
+    // pub discounts: Vec<Value>,
+    #[serde(rename = "invoice_item")]
+    pub invoice_item: Option<String>,
+    pub livemode: Option<bool>,
+    // pub metadata: Metadata,
+    // pub period: Option<Period>,
+    // pub price: Price,
+    pub proration: Option<bool>,
+    pub quantity: Option<i64>,
+    // pub subscription: Value,
+    // #[serde(rename = "tax_amounts")]
+    // pub tax_amounts: Vec<Value>,
+    // #[serde(rename = "tax_rates")]
+    // pub tax_rates: Vec<Value>,
+    #[serde(rename = "type")]
+    pub type_field: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct Period {
+    pub end: Option<i64>,
+    pub start: Option<i64>,
+}
+
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// #[serde(rename_all = "camelCase")]
+// #[doc(hidden)]
+// pub struct Price {
+//     pub id: Option<String>,
+//     pub object: Option<String>,
+//     pub active: Option<bool>,
+//     #[serde(rename = "billing_scheme")]
+//     pub billing_scheme: Option<String>,
+//     pub created: Option<i64>,
+//     pub currency: Option<String>,
+//     pub livemode: Option<bool>,
+//     // #[serde(rename = "lookup_key")]
+//     // pub lookup_key: Value,
+//     // pub metadata: Metadata2,
+//     pub nickname: Option<String>,
+//     pub product: Option<String>,
+//     // pub recurring: Option<,
+//     #[serde(rename = "tax_behavior")]
+//     pub tax_behavior: Option<String>,
+//     // #[serde(rename = "tiers_mode")]
+//     // pub tiers_mode: Value,
+//     // #[serde(rename = "transform_quantity")]
+//     // pub transform_quantity: Value,
+//     #[serde(rename = "type")]
+//     pub type_field: Option<String>,
+//     #[serde(rename = "unit_amount")]
+//     pub unit_amount: Option<i64>,
+//     #[serde(rename = "unit_amount_decimal")]
+//     pub unit_amount_decimal: Option<String>,
+// }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct PaymentSettings {
+    // #[serde(rename = "payment_method_options")]
+    // pub payment_method_options: Value,
+    // #[serde(rename = "payment_method_types")]
+    // pub payment_method_types: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+#[doc(hidden)]
+pub struct StatusTransitions {
+    #[serde(rename = "finalized_at")]
+    pub finalized_at: Option<i64>,
+    #[serde(rename = "marked_uncollectible_at")]
+    pub marked_uncollectible_at: Option<i64>,
+    #[serde(rename = "paid_at")]
+    pub paid_at: Option<i64>,
+    #[serde(rename = "voided_at")]
+    pub voided_at: Option<i64>,
 }

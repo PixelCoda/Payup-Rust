@@ -94,7 +94,7 @@ I built this library due to a lack of synchronous payment libraries. Currently i
 
 Add the following line to your cargo.toml:
 ```
-payup = "0.1.44"
+payup = "0.1.45"
 ```
 
 Example:
@@ -310,9 +310,11 @@ Released under Apache 2.0.
  * https://www.patreon.com/calebsmith_pixelcoda
 
 #### Or donating crypto:
- * ADA:    addr1vyjsx8zthl5fks8xjsf6fkrqqsxr4f5tprfwux5zsnz862glwmyr3
- * BTC:    3BCj9kYsqyENKU5YgrtHgdQh5iA7zxeJJi
- * MANA:   0x10DFc66F881226f2B91D552e0Cf7231C1e409114
- * SHIB:   0xdE897d5b511A66276E9B91A8040F2592553e6c28
-
-
+ * ADA: addr1qyp299a45tgvveh83tcxlf7ds3yaeh969yt3v882lvxfkkv4e0f46qvr4wzj8ty5c05jyffzq8a9pfwz9dl6m0raac7s4rac48
+ * ALGO: VQ5EK4GA3IUTGSPNGV64UANBUVFAIVBXVL5UUCNZSDH544XIMF7BAHEDM4
+ * ATOM: cosmos1wm7lummcealk0fxn3x9tm8hg7xsyuz06ul5fw9
+ * BTC: bc1qh5p3rff4vxnv23vg0hw8pf3gmz3qgc029cekxz
+ * ETH: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+ * ERC20: 0x7A66beaebF7D0d17598d37525e63f524CfD23452
+ * XLM: GCJAUMCO2L7PTYMXELQ6GHBTF25MCQKEBNSND2C4QMUPTSVCPEN3LCOG
+ * XTZ: tz1SgJppPn56whprsDDGcqR4fxqCr2PXvg1R
